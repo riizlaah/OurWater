@@ -55,4 +55,15 @@ public partial class Bill
 
     [InverseProperty("Bill")]
     public virtual ICollection<Fine> Fines { get; set; } = new List<Fine>();
+
+    public decimal calculateTotal()
+    {
+        var fines = calculateFines();
+        return Amount + fines;
+    }
+
+    public decimal calculateFines()
+    {
+        return Fines.Sum(f => f.FineRule.FineAmount * (decimal)f.CreatedAt.Subtract(Deadline).TotalDays);
+    }
 }

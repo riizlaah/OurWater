@@ -41,6 +41,7 @@ namespace OurWaterAPI.Controllers
             var user = await dbc.Users.AsNoTrackingWithIdentityResolution().FirstAsync(u => u.Id == Convert.ToInt32(User.FindFirstValue(ClaimTypes.NameIdentifier)));
             return Helper.json(new
             {
+                id = user.Id,
                 username = user.Username,
                 fullname = user.Fullname,
                 role = user.Role,

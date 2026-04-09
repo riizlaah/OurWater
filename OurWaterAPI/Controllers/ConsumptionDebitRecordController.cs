@@ -42,21 +42,9 @@ namespace OurWaterAPI.Controllers
             return Helper.json(data.Select(c => new
             {
                 id = c.Id,
-                customer = new
-                {
-                    id = c.CustomerId,
-                    name = c.Customer.Fullname
-                },
-                inputtedBy = new
-                {
-                    id = c.InputtedBy,
-                    name = c.InputtingUser.Fullname
-                },
-                correctedBy = c.CorrectedBy != null ? new
-                {
-                    id = c.CorrectedBy,
-                    name = c.CorrectingUser.Fullname
-                } : null,
+                customerName = c.Customer.Fullname,
+                inputtedBy = c.InputtingUser.Fullname,
+                correctedBy = c.CorrectingUser?.Fullname,
                 debit = c.Debit,
                 date = c.Date,
                 status = c.Status,
@@ -69,25 +57,16 @@ namespace OurWaterAPI.Controllers
         [Authorize]
         public async Task<IActionResult> Get(int id)
         {
+            var userId = Convert.ToInt32(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            var role = User.FindFirstValue(ClaimTypes.Role) ?? "customer";
             var c = dbc.ConsumptionDebitRecords.Include(c => c.Customer).Include(c => c.CorrectingUser).Include(c => c.InputtingUser).AsNoTracking().First(c => c.Id == id);
+            if (c.CustomerId != userId && role == "customer") return Helper.err("Forbidden");
             return Helper.json(new
             {
                 id = c.Id,
-                customer = new
-                {
-                    id = c.CustomerId,
-                    name = c.Customer.Fullname
-                },
-                inputtedBy = new
-                {
-                    id = c.InputtedBy,
-                    name = c.InputtingUser.Fullname
-                },
-                correctedBy = c.CorrectedBy != null ? new
-                {
-                    id = c.CorrectedBy,
-                    name = c.CorrectingUser.Fullname
-                } : null,
+                customerName = c.Customer.Fullname,
+                inputtedBy = c.InputtingUser.Fullname,
+                correctedBy = c.CorrectingUser?.Fullname,
                 debit = c.Debit,
                 date = c.Date,
                 status = c.Status,
@@ -100,15 +79,16 @@ namespace OurWaterAPI.Controllers
 
         [HttpPost]
         [Authorize]
-        public async Task<IActionResult> Store(IFormFile img, [FromForm] string location, [FromForm] string customerId, [FromForm] string debit)
+        public async Task<IActionResult> Store(IFormFile img, [FromForm] string customerId, [FromForm] string debit)
         {
             var allowedDay = new[] { 1, 2, 3, 4, 5, 6, 7, 27, 26, 28, 29, 30, 31 };
             //if (!allowedDay.Contains(DateTime.Now.Day)) return Helper.err("Today is not time to input consumption debit record");
-            if (location.Trim() == "" || customerId.Trim() == "" || debit.Trim() == "" || (img == null || img.Length == 0) ) return Helper.err("All field is required");
+            if (customerId.Trim() == "" || debit.Trim() == "" || (img == null || img.Length == 0) ) return Helper.err("All field is required");
             if (!int.TryParse(customerId, out int custId)) return Helper.err("Customer Id not valid");
             if (!decimal.TryParse(debit, out decimal debitDec)) return Helper.err("Debit not valid");
             if(debitDec < 0.00001m) return Helper.err("Debit not valid");
             var userId = Convert.ToInt32(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            var cust = dbc.Users.AsNoTracking().First(u => u.Id == custId);
             var role = User.FindFirstValue(ClaimTypes.Role) ?? "customer";
             var rec = dbc.ConsumptionDebitRecords.Where(c => c.CustomerId == custId && c.Date.Month == DateTime.Now.Month).FirstOrDefault();
             var allowedType = new[] { "image/png", "image/jpeg", "image/jpg" };
@@ -116,15 +96,15 @@ namespace OurWaterAPI.Controllers
             if(rec != null)
             {
                 rec.Debit = debitDec;
-                rec.Location = location;
                 rec.Status = "Pending";
-                rec.ImagePath = await Helper.UploadFile(img, _uploadFolder);
+                rec.ImagePath = await Helper.UploadFile(img, _uploadFolder, rec.ImagePath);
+                rec.UpdatedAt = DateTime.Now;
             } else
             {
                 rec = new ConsumptionDebitRecord
                 {
                     Debit = debitDec,
-                    Location = location,
+                    Location = cust.Address,
                     Status = "Pending",
                     CustomerId = custId,
                     InputtedBy = userId,

@@ -31,9 +31,8 @@ namespace OurWaterDesktop.Forms
             deadline.Text = $"Deadline {bill.deadline:yyyy-MM-dd}";
             fines.DataSource = bill.Fines.ToList();
             fines.DisplayMember = "FineRuleStr";
-            var totalFine = bill.Fines.Sum(f => f.FineRule.fineAmount);
-            fineAmount.Text = $"Fines Amount : {totalFine:Rp#,##0;(Rp#,##0);Rp0}";
-            totalAmount.Text = $"Total Amount : {(totalFine + bill.amount):Rp#,##0;(Rp#,##0);Rp0}";
+            fineAmount.Text = $"Fines Amount : {bill.calculateFines():Rp#,##0;(Rp#,##0);Rp0}";
+            totalAmount.Text = $"Total Amount : {bill.calculateTotal():Rp#,##0;(Rp#,##0);Rp0}";
             if(bill.status == "Rejected" || bill.status == "Approved")
             {
                 approve.Hide();
@@ -61,6 +60,7 @@ namespace OurWaterDesktop.Forms
             var bill2 = dbc.Bills.Find(bill.id);
             bill2.status = "Rejected";
             bill2.rejectionReason = rejectionReason.Text;
+            bill2.updatedAt = DateTime.Now;
             dbc.SaveChanges();
             Close();
         }
@@ -71,6 +71,7 @@ namespace OurWaterDesktop.Forms
             var bill2 = dbc.Bills.Find(bill.id);
             bill2.status = "Approved";
             bill2.rejectionReason = "";
+            bill2.updatedAt = DateTime.Now;
             dbc.SaveChanges();
             Close();
         }

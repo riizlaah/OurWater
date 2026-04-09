@@ -83,8 +83,10 @@ namespace OurWaterAPI.Controllers
                     inputtedBy = b.ConsumptionRecord.InputtingUser.Fullname,
                 },
                 status = b.Status,
-                amount = b.Amount + b.Fines.Sum(f => f.FineRule.FineAmount),
-                fines = b.Fines.Select(f => $"{f.FineRule.DayAfterDeadline} day - {f.FineRule.FineAmount:Rp#,##0;(Rp#,##0);Rp0}"),
+                originalAmount = b.Amount,
+                fines = b.Fines.Select(f => $"{f.FineRule.DayAfterDeadline} day x {f.FineRule.FineAmount:Rp#,##0;(Rp#,##0);Rp0}"),
+                totalAmount = b.calculateTotal(),
+                fineAmount = b.calculateFines(),
                 rejectionReason = b.RejectionReason,
                 imagePath = b.ImagePath,
                 deadline = b.Deadline,
@@ -92,7 +94,6 @@ namespace OurWaterAPI.Controllers
                 createdAt = b.CreatedAt
             });
         }
-
 
 
         [HttpPut("{id}")]
@@ -106,8 +107,9 @@ namespace OurWaterAPI.Controllers
             if (!allowedType.Contains(img.ContentType)) return Helper.err("Not an image (png/jpg/jpeg) file");
             var bill = dbc.Bills.Find(id);
             if (bill == null) return Helper.err("Bill not found", 404);
-            bill.ImagePath = await Helper.UploadFile(img, _uploadFolder);
+            bill.ImagePath = await Helper.UploadFile(img, _uploadFolder, bill.ImagePath);
             bill.Status = "Paid Unconfirmed";
+            bill.UpdatedAt = DateTime.Now;
             await dbc.SaveChangesAsync();
             return Helper.json(null);
         }

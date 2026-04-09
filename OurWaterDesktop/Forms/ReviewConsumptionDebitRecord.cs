@@ -66,7 +66,7 @@ namespace OurWaterDesktop.Forms
             var rec = dbc.ConsumptionDebitRecords.Find(record.id);
             rec.rejectionReason = "";
             rec.status = "Verified";
-            dbc.SaveChanges();
+            rec.updatedAt = DateTime.Now;
             var amount = 0m;
             if(rec.debit < 10m)
             {
@@ -104,6 +104,7 @@ namespace OurWaterDesktop.Forms
             var rec = dbc.ConsumptionDebitRecords.Find(record.id);
             rec.rejectionReason = rejectionReason.Text;
             rec.status = "Rejected";
+            rec.updatedAt = DateTime.Now;
             dbc.SaveChanges();
             Close();
         }

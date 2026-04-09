@@ -50,7 +50,7 @@ namespace OurWaterDesktop.Forms
                     date = DateTime.Today,
                     debit = debitDecimal,
                     inputtedBy = dbc.User.id,
-                    location = dbc.User.address
+                    location = dbc.User.address,
                 });
                 dbc.SaveChanges();
             } else

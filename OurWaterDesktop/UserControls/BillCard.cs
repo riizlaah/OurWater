@@ -22,7 +22,7 @@ namespace OurWaterDesktop.UserControls
             customerName.Text = $"Customer : {bill.Customer.fullname}";
             header.Text = $"{bill.createdAt:yyyy-MM-dd} - {bill.status}";
             debit.Text = $"Debit : {bill.ConsumptionDebitRecord.debit} M³";
-            amount.Text = $"Amount : {bill.amount:Rp#,##0;(Rp#,##0);Rp0}";
+            amount.Text = $"Total Amount : {bill.calculateTotal():Rp#,##0;(Rp#,##0);Rp0}";
             debit.Text = $"Deadline : {bill.deadline:yyyy-MM-dd}";
         }
 

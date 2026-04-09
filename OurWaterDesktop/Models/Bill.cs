@@ -5,6 +5,7 @@ namespace OurWaterDesktop.Models
     using System.ComponentModel.DataAnnotations;
     using System.ComponentModel.DataAnnotations.Schema;
     using System.Data.Entity.Spatial;
+    using System.Linq;
 
     public partial class Bill
     {
@@ -43,5 +44,16 @@ namespace OurWaterDesktop.Models
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<Fine> Fines { get; set; }
+
+        public decimal calculateTotal()
+        {
+            var fines = calculateFines();
+            return amount + fines;
+        }
+        
+        public decimal calculateFines()
+        {
+            return Fines.Sum(f => f.FineRule.fineAmount * (decimal)f.createdAt.Subtract(deadline).TotalDays);
+        }
     }
 }
