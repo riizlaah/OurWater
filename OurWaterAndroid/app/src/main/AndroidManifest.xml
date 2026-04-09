@@ -17,6 +17,8 @@
         <activity android:name=".HomeActivity" android:exported="false"/>
         <activity android:name=".ConsumptionDebitDetailActivity" android:exported="false"/>
         <activity android:name=".SubmitConsumptionDebitRecordActivity" android:exported="false"/>
+        <activity android:name=".ViewBillsActivity" android:exported="false"/>
+        <activity android:name=".PayBillActivity" android:exported="false"/>
         <activity
             android:name=".MainActivity"
             android:exported="true"

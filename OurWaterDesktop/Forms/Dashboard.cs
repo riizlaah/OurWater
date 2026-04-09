@@ -70,5 +70,12 @@ namespace OurWaterDesktop.Forms
             Hide();
             window.Show();
         }
+
+        private void onViewWaterReports(object sender, EventArgs e)
+        {
+            var window = new ViewWaterUsageReports(dbc, this);
+            Hide();
+            window.Show();
+        }
     }
 }

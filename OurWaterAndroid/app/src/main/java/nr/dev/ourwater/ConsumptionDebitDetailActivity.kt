@@ -59,6 +59,7 @@ class ConsumptionDebitDetailActivity: ComponentActivity() {
 
                     LaunchedEffect(Unit) {
                         rec = HttpClient.getConsumptionDebitById(intent.getIntExtra("id", 0))
+                        reason = rec!!.rejectionReason
                     }
 
                     Column(
@@ -92,7 +93,7 @@ class ConsumptionDebitDetailActivity: ComponentActivity() {
                                 NetImage(rec!!.imagePath, modifier = Modifier.fillMaxWidth())
                                 Spacer(Modifier.height(40.dp))
                                 Text("Rejection Reason")
-                                OutlinedTextField(reason, {reason = it}, singleLine = false, maxLines = 5, modifier = Modifier.fillMaxWidth(), readOnly = role == "customer" || rec!!.status == "Pending")
+                                OutlinedTextField(reason, {reason = it}, singleLine = false, maxLines = 5, modifier = Modifier.fillMaxWidth(), readOnly = role == "customer" || rec!!.status != "Pending")
                                 Spacer(Modifier.height(12.dp))
                                 if(role == "customer") return@item
                                 if(rec!!.status != "Pending") return@item
@@ -105,6 +106,7 @@ class ConsumptionDebitDetailActivity: ComponentActivity() {
                                         }
                                         scope.launch {
                                             HttpClient.patchConsumptionDebit(rec!!.id, reason, "Rejected")
+                                            finish()
                                         }
                                     }) {
                                         Text("Reject")
@@ -112,6 +114,7 @@ class ConsumptionDebitDetailActivity: ComponentActivity() {
                                     Button({
                                         scope.launch {
                                             HttpClient.patchConsumptionDebit(rec!!.id, "", "Verified")
+                                            finish()
                                         }
                                     }) {
                                         Text("Verify")

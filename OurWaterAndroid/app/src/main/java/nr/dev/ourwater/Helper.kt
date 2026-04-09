@@ -32,6 +32,7 @@ data class HttpReq(
     val body: String = "",
     val method: String = "GET",
     val headers: Map<String, String> = emptyMap(),
+    val bytes: ByteArray? = null,
     val timeout: Int = 10000
 )
 
@@ -75,7 +76,7 @@ data class Bill(
     val fineAmount: Double = 0.0,
     val fines: List<String> = emptyList(),
     val rejectionReason: String = "",
-    val imagePath: String = "",
+    val imagePath: String? = null,
 )
 
 
@@ -102,7 +103,6 @@ object HttpClient {
     lateinit var sharedPrefs: SharedPreferences
 
     fun loadToken() {
-
         token = sharedPrefs.getString("token", "") ?: ""
     }
 
@@ -119,8 +119,13 @@ object HttpClient {
             conn.readTimeout = req.timeout
             conn.connectTimeout = req.timeout
             req.headers.forEach { (t, u) -> conn.setRequestProperty(t, u) }
-            if (req.body.isNotEmpty() && req.method in listOf("POST", "PUT", "PATCH")) {
-                conn.getOutputStream().buffered().use { it.write(req.body.toByteArray()) }
+            if ((req.body.isNotEmpty() || req.bytes != null) && req.method in listOf("POST", "PUT", "PATCH")) {
+                conn.doOutput = true
+                if(req.bytes == null) {
+                    conn.getOutputStream().buffered().use { it.write(req.body.toByteArray()) }
+                } else {
+                    conn.getOutputStream().buffered().use { it.write(req.bytes) }
+                }
             }
 
             conn.connect()
@@ -189,7 +194,7 @@ object HttpClient {
     ): HttpRes {
         return try {
             val boundary = "----WebKitFormBoundary${System.currentTimeMillis()}"
-            val lineEnd = "\r\n".toByteArray()
+            val crlf = "\r\n".toByteArray()
             val twoHyphens = "--".toByteArray()
 
             val outputStream = ByteArrayOutputStream()
@@ -197,40 +202,39 @@ object HttpClient {
             others.forEach { (k, v) ->
                 outputStream.write(twoHyphens)
                 outputStream.write(boundary.toByteArray())
-                outputStream.write(lineEnd)
+                outputStream.write(crlf)
                 outputStream.write("Content-Disposition: form-data; name=\"$k\"".toByteArray())
-                outputStream.write(lineEnd)
-                outputStream.write(lineEnd)
+                outputStream.write(crlf)
+                outputStream.write(crlf)
                 outputStream.write(v.toByteArray())
-                outputStream.write(lineEnd)
+                outputStream.write(crlf)
             }
             files.forEach { (name, file) ->
                 outputStream.write(twoHyphens)
                 outputStream.write(boundary.toByteArray())
-                outputStream.write(lineEnd)
+                outputStream.write(crlf)
                 outputStream.write("Content-Disposition: form-data; name=\"$name\"; filename=\"${file.name}\"".toByteArray())
-                outputStream.write(lineEnd)
+                outputStream.write(crlf)
                 outputStream.write("Content-Type: ${file.mimeType}".toByteArray())
-                outputStream.write(lineEnd)
-                outputStream.write(lineEnd)
+                outputStream.write(crlf)
+                outputStream.write(crlf)
                 outputStream.write(file.content)
-                outputStream.write(lineEnd)
+                outputStream.write(crlf)
             }
             outputStream.write(twoHyphens)
             outputStream.write(boundary.toByteArray())
             outputStream.write(twoHyphens)
-            outputStream.write(lineEnd)
+            outputStream.write(crlf)
 
-            val body = outputStream.toByteArray()
+            val bytes = outputStream.toByteArray()
 
             var headers = mapOf(
                 "Content-Type" to "multipart/form-data; boundary=$boundary",
-                "Content-Length" to body.size.toString()
             )
             if(token != "") headers = headers + mapOf("authorization" to "Bearer $token")
 
             withContext(Dispatchers.IO) {
-                send(HttpReq(addr + route, String(body), method, headers))
+                send(HttpReq(addr + route, bytes = bytes, method = method, headers = headers))
             }
         } catch (e: Exception) {
             HttpRes(-1, errors = e.message ?: "Upload failed")
@@ -247,6 +251,7 @@ object HttpClient {
                 token = json.getJSONObject("data").getString("token")
                 role = json.getJSONObject("data").getString("role")
                 saveToken()
+                me()
                 "ok"
             } else {
                 json.optString("message", "Login Failed")
@@ -258,10 +263,11 @@ object HttpClient {
     }
 
     suspend fun me(): Boolean {
-        val res = jsonReq("api/me")
+        val res = jsonReq("api/auth/me")
         if(res.code != 200 || res.body.isNullOrEmpty()) return false
         val obj = JSONObject(res.body).getJSONObject("data")
         user = User(obj.getInt("id"), obj.getString("fullname"), obj.getString("role"))
+        role = user!!.role
         return true
     }
 
@@ -361,7 +367,7 @@ object HttpClient {
             obj.getDouble("fineAmount"),
             fines,
             obj.getString("rejectionReason"),
-            obj.getString("imagePath")
+            if(obj.isNull("imagePath")) null else obj.getString("imagePath")
         )
     }
 
@@ -380,7 +386,22 @@ object HttpClient {
         return arr
     }
 
-    suspend fun submitPayment() {}
+    suspend fun submitPayment(file: FileUpload, id: Int): String {
+        val res = sendWithFile("api/bills/$id", mapOf("img" to file), method = "PUT")
+        println(res)
+        if (res.body.isNullOrEmpty()) return "Submit Payment Failed"
+        return try {
+            val json = JSONObject(res.body)
+            if (res.code == 200) {
+                "ok"
+            } else {
+                json.optString("message", "Submit Payment Failed")
+            }
+        } catch (e: Exception) {
+            Log.e("SubmitPayment", e.message ?: "Error")
+            "Submit Payment Failed"
+        }
+    }
 
     suspend fun submitConsumptionDebit(file: FileUpload, customerId: Int, debit: Double): String {
         val res = sendWithFile("api/debit-record", mapOf("img" to file), mapOf("customerId" to customerId.toString(), "debit" to debit.toString().replace('.', ',')), "POST")
