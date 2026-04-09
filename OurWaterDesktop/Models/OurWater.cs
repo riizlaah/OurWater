@@ -18,6 +18,7 @@ namespace OurWaterDesktop.Models
         public virtual DbSet<Fine> Fines { get; set; }
         public virtual DbSet<ProductionDebitRecord> ProductionDebitRecords { get; set; }
         public virtual DbSet<User> Users { get; set; }
+        public User User { get; set; }
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {

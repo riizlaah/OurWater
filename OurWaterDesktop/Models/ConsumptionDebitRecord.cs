@@ -28,19 +28,13 @@ namespace OurWaterDesktop.Models
         public DateTime date { get; set; }
 
         [Required]
-        [StringLength(16)]
         public string status { get; set; }
 
-        [Required]
-        [StringLength(300)]
         public string rejectionReason { get; set; }
 
-        [Required]
-        [StringLength(128)]
         public string imagePath { get; set; }
 
         [Required]
-        [StringLength(128)]
         public string location { get; set; }
 
         public DateTime updatedAt { get; set; }

@@ -31,8 +31,8 @@
             this.date = new System.Windows.Forms.Label();
             this.status = new System.Windows.Forms.Label();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
-            this.customerName = new System.Windows.Forms.Label();
             this.customerAddr = new System.Windows.Forms.Label();
+            this.customerName = new System.Windows.Forms.Label();
             this.inputtedByType = new System.Windows.Forms.GroupBox();
             this.inputtedByName = new System.Windows.Forms.Label();
             this.debit = new System.Windows.Forms.Label();
@@ -42,6 +42,7 @@
             this.correctedByName = new System.Windows.Forms.Label();
             this.verify = new System.Windows.Forms.Button();
             this.reject = new System.Windows.Forms.Button();
+            this.label1 = new System.Windows.Forms.Label();
             this.groupBox1.SuspendLayout();
             this.inputtedByType.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
@@ -78,15 +79,6 @@
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Customer";
             // 
-            // customerName
-            // 
-            this.customerName.AutoSize = true;
-            this.customerName.Location = new System.Drawing.Point(17, 29);
-            this.customerName.Name = "customerName";
-            this.customerName.Size = new System.Drawing.Size(130, 16);
-            this.customerName.TabIndex = 3;
-            this.customerName.Text = "Name : Lorem Ipsum";
-            // 
             // customerAddr
             // 
             this.customerAddr.AutoSize = true;
@@ -95,6 +87,15 @@
             this.customerAddr.Size = new System.Drawing.Size(139, 16);
             this.customerAddr.TabIndex = 4;
             this.customerAddr.Text = "Address : Somewhere";
+            // 
+            // customerName
+            // 
+            this.customerName.AutoSize = true;
+            this.customerName.Location = new System.Drawing.Point(17, 29);
+            this.customerName.Name = "customerName";
+            this.customerName.Size = new System.Drawing.Size(130, 16);
+            this.customerName.TabIndex = 3;
+            this.customerName.Text = "Name : Lorem Ipsum";
             // 
             // inputtedByType
             // 
@@ -127,15 +128,16 @@
             // pictureBox1
             // 
             this.pictureBox1.BackColor = System.Drawing.SystemColors.ControlLight;
-            this.pictureBox1.Location = new System.Drawing.Point(374, 78);
+            this.pictureBox1.Location = new System.Drawing.Point(374, 25);
             this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(322, 255);
+            this.pictureBox1.Size = new System.Drawing.Size(567, 561);
+            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.pictureBox1.TabIndex = 7;
             this.pictureBox1.TabStop = false;
             // 
             // rejectionReason
             // 
-            this.rejectionReason.Location = new System.Drawing.Point(28, 361);
+            this.rejectionReason.Location = new System.Drawing.Point(28, 469);
             this.rejectionReason.Multiline = true;
             this.rejectionReason.Name = "rejectionReason";
             this.rejectionReason.Size = new System.Drawing.Size(322, 77);
@@ -144,7 +146,7 @@
             // correctedByGroup
             // 
             this.correctedByGroup.Controls.Add(this.correctedByName);
-            this.correctedByGroup.Location = new System.Drawing.Point(374, 361);
+            this.correctedByGroup.Location = new System.Drawing.Point(28, 358);
             this.correctedByGroup.Name = "correctedByGroup";
             this.correctedByGroup.Size = new System.Drawing.Size(322, 77);
             this.correctedByGroup.TabIndex = 6;
@@ -162,7 +164,7 @@
             // 
             // verify
             // 
-            this.verify.Location = new System.Drawing.Point(256, 444);
+            this.verify.Location = new System.Drawing.Point(256, 552);
             this.verify.Name = "verify";
             this.verify.Size = new System.Drawing.Size(94, 34);
             this.verify.TabIndex = 9;
@@ -172,7 +174,7 @@
             // 
             // reject
             // 
-            this.reject.Location = new System.Drawing.Point(28, 444);
+            this.reject.Location = new System.Drawing.Point(28, 552);
             this.reject.Name = "reject";
             this.reject.Size = new System.Drawing.Size(94, 34);
             this.reject.TabIndex = 10;
@@ -180,11 +182,21 @@
             this.reject.UseVisualStyleBackColor = true;
             this.reject.Click += new System.EventHandler(this.onReject);
             // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(26, 445);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(115, 16);
+            this.label1.TabIndex = 11;
+            this.label1.Text = "Rejection Reason";
+            // 
             // ReviewConsumptionDebitRecord
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(722, 514);
+            this.ClientSize = new System.Drawing.Size(962, 610);
+            this.Controls.Add(this.label1);
             this.Controls.Add(this.reject);
             this.Controls.Add(this.verify);
             this.Controls.Add(this.correctedByGroup);
@@ -196,6 +208,7 @@
             this.Controls.Add(this.status);
             this.Controls.Add(this.date);
             this.Name = "ReviewConsumptionDebitRecord";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "ReviewConsumptionDebitRecord";
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
@@ -225,5 +238,6 @@
         private System.Windows.Forms.Label correctedByName;
         private System.Windows.Forms.Button verify;
         private System.Windows.Forms.Button reject;
+        private System.Windows.Forms.Label label1;
     }
 }

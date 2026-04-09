@@ -14,6 +14,7 @@ namespace OurWaterDesktop.Models
             Fines = new HashSet<Fine>();
         }
 
+        [Key]
         public int id { get; set; }
 
         public int customerId { get; set; }
@@ -26,12 +27,9 @@ namespace OurWaterDesktop.Models
         [StringLength(16)]
         public string status { get; set; }
 
-        [Required]
-        [StringLength(300)]
         public string rejectionReason { get; set; }
 
-        [StringLength(128)]
-        public string imagePath { get; set; }
+        public string imagePath { get; set; } = null;
 
         public DateTime deadline { get; set; }
 

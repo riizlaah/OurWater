@@ -18,7 +18,6 @@ namespace OurWaterDesktop.Models
         public DateTime date { get; set; }
 
         [Required]
-        [StringLength(128)]
         public string location { get; set; }
 
         public virtual User InputtingUser { get; set; }

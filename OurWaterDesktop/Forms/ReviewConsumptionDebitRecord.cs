@@ -14,14 +14,17 @@ namespace OurWaterDesktop.Forms
 {
     public partial class ReviewConsumptionDebitRecord : Form
     {
+        private readonly HttpClient _http;
         private readonly ConsumptionDebitRecord record;
         private readonly OurWater dbc;
+        
         public ReviewConsumptionDebitRecord(ConsumptionDebitRecord rec, OurWater ctx)
         {
+            _http = new HttpClient();
             dbc = ctx;
             record = rec;
             InitializeComponent();
-            date.Text = rec.date.ToString();
+            date.Text = rec.date.ToString("yyyy-MM-dd");
             status.Text = "Status : " + rec.status.ToString();
             debit.Text = $"Debit : {rec.debit:2f}M³";
             customerName.Text = $"Name : {rec.Customer.fullname}";
@@ -50,6 +53,12 @@ namespace OurWaterDesktop.Forms
                 reject.Hide();
                 verify.Hide();
             }
+            loadImg(rec.imagePath);
+        }
+
+        private async Task loadImg(string path)
+        {
+            pictureBox1.Image = await Helper.loadImage(path, _http);
         }
 
         private void onVerify(object sender, EventArgs e)
@@ -57,6 +66,30 @@ namespace OurWaterDesktop.Forms
             var rec = dbc.ConsumptionDebitRecords.Find(record.id);
             rec.rejectionReason = "";
             rec.status = "Verified";
+            dbc.SaveChanges();
+            var amount = 0m;
+            if(rec.debit < 10m)
+            {
+                amount = rec.debit * 2500m;
+            } else if(rec.debit < 20m)
+            {
+                amount = (10 * 2500m) + ((rec.debit - 10m) * 3500m);
+            } else
+            {
+                amount = (10 * 2500m) + (10m * 3500m) + ((rec.debit - 20m) * 5000);
+            }
+            dbc.Bills.Add(new Bill
+            {
+                customerId = rec.customerId,
+                consumptionRecordId = rec.id,
+                amount = amount,
+                deadline = DateTime.Now.AddDays(14),
+                status = "Pending",
+                updatedAt = DateTime.Now,
+                createdAt = DateTime.Now,
+                rejectionReason = "",
+                imagePath = null
+            });
             dbc.SaveChanges();
             Close();
         }

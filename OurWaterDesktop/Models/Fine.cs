@@ -19,5 +19,7 @@ namespace OurWaterDesktop.Models
         public virtual Bill Bill { get; set; }
 
         public virtual FineRule FineRule { get; set; }
+
+        public string FineRuleStr => $"{FineRule.dayAfterDeadline} day - {FineRule.fineAmount:Rp#,##0;(Rp#,##0);Rp0}";
     }
 }

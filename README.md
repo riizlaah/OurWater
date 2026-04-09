@@ -23,4 +23,11 @@ Used DB Schema: V2
     - `(Customer)` View Charged Bill
     - `(Customer)` Pay Charged Bill
 3. API
-    - 
+    - Login
+    - Get all consumption debit record
+    - Get consumption debit record detail by id
+    - Get consumption debit record detail for this month (opt)
+    - Submit consumption debit record
+    - Update consumption debit record (officer)
+    - Get customer bills (customer)
+    - Submit customer payment (customer)

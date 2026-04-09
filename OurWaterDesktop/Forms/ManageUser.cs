@@ -91,10 +91,25 @@ namespace OurWaterDesktop.Forms
 
         private void onSave(object sender, EventArgs e)
         {
+            if(username.Text.Trim() == "" || password.Text.Trim() == "" ||  fullname.Text.Trim() == "" || address.Text.Trim() == "")
+            {
+                MessageBox.Show("All data must be filled");
+                return;
+            }
+            if(roles.SelectedItem == null)
+            {
+                MessageBox.Show("Role must be selected");
+                return;
+            }
             if(editing)
             {
                 var user1 = GetSelected();
                 if (user1 == null) return;
+                if (dbc.Users.Any(u => u.username == username.Text && u.id != user1.id))
+                {
+                    MessageBox.Show("Username has been used");
+                    return;
+                }
                 var user = dbc.Users.Find(user1.id);
                 user.username = username.Text;
                 user.fullname = fullname.Text;
@@ -104,19 +119,9 @@ namespace OurWaterDesktop.Forms
                 dbc.SaveChanges();
             } else
             {
-                if(username.Text.Trim() == "" || password.Text.Trim() == "" ||  fullname.Text.Trim() == "" || address.Text.Trim() == "")
-                {
-                    MessageBox.Show("All data must be filled");
-                    return;
-                }
                 if(dbc.Users.Any(u => u.username == username.Text))
                 {
                     MessageBox.Show("Username has been used");
-                    return;
-                }
-                if(roles.SelectedItem == null)
-                {
-                    MessageBox.Show("Role must be selected");
                     return;
                 }
                 dbc.Users.Add(new User { username = username.Text, password = password.Text, fullname = fullname.Text, address = address.Text, role = roles.SelectedItem.ToString() });

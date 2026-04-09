@@ -12,11 +12,11 @@ using System.Windows.Forms;
 
 namespace OurWaterDesktop.Forms
 {
-    public partial class ViewConsumptionDebitRecords : Form
+    public partial class ViewProductionDebitRecords : Form
     {
         private readonly OurWater dbc;
         private readonly Dashboard dash;
-        public ViewConsumptionDebitRecords(OurWater ctx, Dashboard dashb)
+        public ViewProductionDebitRecords(OurWater ctx, Dashboard dashb)
         {
             dbc = ctx;
             dash = dashb;
@@ -27,20 +27,19 @@ namespace OurWaterDesktop.Forms
         private void RefreshData()
         {
             flowLayoutPanel1.Controls.Clear();
-            var items = dbc.ConsumptionDebitRecords.AsNoTracking().Include("Customer").Include("InputtingUser").OrderByDescending(c => c.date).ToList();
+            var items = dbc.ProductionDebitRecords.Include("InputtingUser").OrderByDescending(c => c.date).ToList();
             foreach(var rec in items)
             {
-                var item = new DebitRecord(rec, null);
+                var item = new DebitRecord(null, rec);
                 flowLayoutPanel1.Controls.Add(item);
-                item.recordClicked += OnClicked;
+                item.prodRecordClicked += OnClicked;
             }
         }
 
-        private void OnClicked(object sender, ConsumptionDebitRecord rec)
+        private void OnClicked(object sender, ProductionDebitRecord rec)
         {
-            var reviewDialog = new ReviewConsumptionDebitRecord(rec, dbc);
+            var reviewDialog = new SubmitProductionDebitRecord(dbc, rec);
             reviewDialog.ShowDialog();
-            RefreshData();
         }
 
         protected override void OnClosed(EventArgs e)

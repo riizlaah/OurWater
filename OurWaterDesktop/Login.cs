@@ -40,7 +40,7 @@ namespace OurWaterDesktop
                 MessageBox.Show("Credentials invalid");
                 return;
             }
-            dbc.user = user;
+            dbc.User = user;
             var window = new Dashboard(dbc, this);
             Hide();
             window.Show();

@@ -1,6 +1,6 @@
 ﻿namespace OurWaterDesktop.Forms
 {
-    partial class ViewConsumptionDebitRecords
+    partial class ViewCustomerBills
     {
         /// <summary>
         /// Required designer variable.
@@ -33,23 +33,22 @@
             // 
             // flowLayoutPanel1
             // 
-            this.flowLayoutPanel1.AutoScroll = true;
             this.flowLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.flowLayoutPanel1.Location = new System.Drawing.Point(12, 12);
             this.flowLayoutPanel1.Name = "flowLayoutPanel1";
-            this.flowLayoutPanel1.Size = new System.Drawing.Size(988, 533);
+            this.flowLayoutPanel1.Size = new System.Drawing.Size(776, 426);
             this.flowLayoutPanel1.TabIndex = 0;
             // 
-            // ViewConsumptionDebitRecords
+            // ViewCustomerBills
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1012, 557);
+            this.ClientSize = new System.Drawing.Size(800, 450);
             this.Controls.Add(this.flowLayoutPanel1);
-            this.Name = "ViewConsumptionDebitRecords";
+            this.Name = "ViewCustomerBills";
             this.Padding = new System.Windows.Forms.Padding(12);
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "ViewConsumptionDebitRecords";
+            this.Text = "ViewCustomerBills";
             this.ResumeLayout(false);
 
         }
