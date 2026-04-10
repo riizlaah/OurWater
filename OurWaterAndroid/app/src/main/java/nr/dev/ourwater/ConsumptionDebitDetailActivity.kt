@@ -96,7 +96,7 @@ class ConsumptionDebitDetailActivity: ComponentActivity() {
                                 OutlinedTextField(reason, {reason = it}, singleLine = false, maxLines = 5, modifier = Modifier.fillMaxWidth(), readOnly = role == "customer" || rec!!.status != "Pending")
                                 Spacer(Modifier.height(12.dp))
                                 if(role == "customer") return@item
-                                if(rec!!.status != "Pending") return@item
+                                if(rec!!.status != "Pending" || rec!!.inputtedBy == HttpClient.user!!.fullName) return@item
                                 ErrText(errMsg, Modifier.fillMaxWidth())
                                 Row(Modifier.fillMaxWidth().padding(vertical = 24.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
                                     Button({
