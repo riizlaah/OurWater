@@ -29,9 +29,9 @@ public partial class ConsumptionDebitRecord
 
     public virtual ICollection<Bill> Bills { get; set; } = new List<Bill>();
 
-    public virtual User? CorrectedByNavigation { get; set; }
+    public virtual User? Corrector { get; set; }
 
     public virtual User Customer { get; set; } = null!;
 
-    public virtual User InputtedByNavigation { get; set; } = null!;
+    public virtual User Creator { get; set; } = null!;
 }

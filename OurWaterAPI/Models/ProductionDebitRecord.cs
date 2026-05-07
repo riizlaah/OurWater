@@ -15,5 +15,5 @@ public partial class ProductionDebitRecord
 
     public string Location { get; set; } = null!;
 
-    public virtual User InputtedByNavigation { get; set; } = null!;
+    public virtual User Creator { get; set; } = null!;
 }

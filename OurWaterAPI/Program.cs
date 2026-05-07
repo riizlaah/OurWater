@@ -4,6 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 using OurWaterAPI;
 using System.Text;
 using OurWaterAPI.Models;
+using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,15 +40,36 @@ builder.Services.AddAuthentication().AddJwtBearer(opt =>
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
     };
 });
+builder.Services.AddAuthorization();
+builder.Services.AddCors(opt =>
+{
+    opt.AddPolicy("AllowAll", builder =>
+    {
+        builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+    });
+});
 
 var app = builder.Build();
+
+
 
 // Configure the HTTP request pipeline.
 app.UseSwagger();
 app.UseSwaggerUI();
 
-app.UseHttpsRedirection();
 
+var uploadPath = Path.Combine(builder.Environment.ContentRootPath, "wwwroot\\Uploads");
+if (!Directory.Exists(uploadPath)) Directory.CreateDirectory(uploadPath);
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(uploadPath),
+    RequestPath = "/uploads"
+});
+app.UseCors("AllowAll");
+
+//app.UseHttpsRedirection();
+
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

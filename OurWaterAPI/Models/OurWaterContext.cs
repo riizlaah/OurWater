@@ -108,7 +108,7 @@ public partial class OurWaterContext : DbContext
                 .HasColumnType("datetime")
                 .HasColumnName("updatedAt");
 
-            entity.HasOne(d => d.CorrectedByNavigation).WithMany(p => p.ConsumptionDebitRecordCorrectedByNavigations)
+            entity.HasOne(d => d.Corrector).WithMany(p => p.ConsumptionDebitRecordCorrectedByNavigations)
                 .HasForeignKey(d => d.CorrectedBy)
                 .HasConstraintName("FK_ConsumptionDebitRecord_Users2");
 
@@ -117,7 +117,7 @@ public partial class OurWaterContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_ConsumptionDebitRecord_Users1");
 
-            entity.HasOne(d => d.InputtedByNavigation).WithMany(p => p.ConsumptionDebitRecordInputtedByNavigations)
+            entity.HasOne(d => d.Creator).WithMany(p => p.ConsumptionDebitRecordInputtedByNavigations)
                 .HasForeignKey(d => d.InputtedBy)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_ConsumptionDebitRecord_Users");
@@ -170,7 +170,7 @@ public partial class OurWaterContext : DbContext
                 .IsUnicode(false)
                 .HasColumnName("location");
 
-            entity.HasOne(d => d.InputtedByNavigation).WithMany(p => p.ProductionDebitRecords)
+            entity.HasOne(d => d.Creator).WithMany(p => p.ProductionDebitRecords)
                 .HasForeignKey(d => d.InputtedBy)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_ProductionDebitRecord_Users");
