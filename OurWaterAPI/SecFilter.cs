@@ -18,6 +18,7 @@ namespace OurWaterAPI
                         new OpenApiSecurityScheme
                         {
                             Name = "Authorization",
+                            Scheme = "Bearer",
                             In = ParameterLocation.Header,
                             Type = SecuritySchemeType.Http,
                             Reference = new OpenApiReference

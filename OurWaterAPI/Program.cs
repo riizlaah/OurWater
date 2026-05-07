@@ -21,6 +21,7 @@ builder.Services.AddSwaggerGen(opt =>
     {
         BearerFormat = "JWT",
         Name = "Authorization",
+        Scheme = "Bearer",
         In = ParameterLocation.Header,
         Type = SecuritySchemeType.Http,
         Reference = new OpenApiReference

@@ -29,10 +29,11 @@ namespace OurWaterAPI.Controllers
             if (user == null) return Helper.err("User not found");
             if (!sha256Verify(input.password, user.Password))
             {
-                return Helper.err("Password not valid");
+                return Helper.err("Wrong credentials");
             }
             return Helper.res(new
             {
+                fullname = user.Fullname,
                 username = user.Username,
                 role = user.Role,
                 token = GenerateToken(user.Id, user.Role)

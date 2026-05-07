@@ -24,6 +24,7 @@ namespace OurWaterAPI.Controllers
         [Authorize(Roles = "admin")]
         public ActionResult Submit(ProdDebitDTO input)
         {
+            if (dbc.ProductionDebitRecords.Any(p => p.Date == input.date)) return Helper.err("Record already exists");
             var userId = Convert.ToInt32(User.FindFirstValue(ClaimTypes.NameIdentifier));
             dbc.ProductionDebitRecords.Add(new ProductionDebitRecord
             {

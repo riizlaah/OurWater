@@ -30,4 +30,8 @@ public partial class Bill
     public virtual User Customer { get; set; } = null!;
 
     public virtual ICollection<Fine> Fines { get; set; } = new List<Fine>();
+
+    public decimal ExtraFine => Fines.Sum(f => f.FineRule.GetFineCost(CreatedAt));
+
+    public decimal TotalPrice => ExtraFine + Amount;
 }

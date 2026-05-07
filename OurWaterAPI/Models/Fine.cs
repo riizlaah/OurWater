@@ -16,4 +16,5 @@ public partial class Fine
     public virtual Bill Bill { get; set; } = null!;
 
     public virtual FineRule FineRule { get; set; } = null!;
+
 }

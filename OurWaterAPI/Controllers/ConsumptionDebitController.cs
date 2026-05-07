@@ -22,7 +22,7 @@ namespace OurWaterAPI.Controllers
         }
 
         [HttpPost]
-        [Authorize("officer,customer")]
+        [Authorize(Roles = "officer,customer")]
         public async Task<ActionResult> Submit(IFormFile img, [FromForm] int customerId, [FromForm] decimal debit)
         {
             var allowedDay = new[] { 1, 2, 3, 4, 5, 6, 7, 26, 27, 28, 29, 30, 31 };
@@ -124,7 +124,7 @@ namespace OurWaterAPI.Controllers
             var recUser = rec.Corrector ?? rec.Creator;
             var role = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (role == "officer" && recUser.Role == "officer") return Helper.err("Officer can't review other officer inputted record");
-            if (input.status == "Rejected" && input.rejectionReason == "") return Helper.err("Rejection reason required");
+            if (input.status == "Rejected" && input.rejectionReason.Trim() == "") return Helper.err("Rejection reason required");
             rec.Status = input.status;
             rec.RejectionReason = input.rejectionReason;
             rec.UpdatedAt = DateTime.Now;
