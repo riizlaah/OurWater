@@ -30,13 +30,13 @@ namespace OurWaterAPI.Controllers
             //var user = dbc.Users.FirstOrDefault(u => u.Id == userId);
             var role = User.FindFirstValue(ClaimTypes.Role) ?? "customer";
             var fineRules = dbc.FineRules.ToList();
-            var bills = dbc.Bills.Include(b => b.Customer).Include(b => b.Fines).ThenInclude(f => f.FineRule).AsQueryable();
+            var bills = dbc.Bills.Include(b => b.ConsumptionRecord).Include(b => b.Customer).Include(b => b.Fines).ThenInclude(f => f.FineRule).AsQueryable();
             var now = DateTime.Now;
             if(role == "customer")
             {
                 bills = bills.Where(b => b.CustomerId == userId);
             }
-            var bills2 = bills.ToList();
+            var bills2 = bills.OrderByDescending(b => b.UpdatedAt).ToList();
             var somethingChanged = false;
             foreach(var bill in bills2)
             {
@@ -44,7 +44,7 @@ namespace OurWaterAPI.Controllers
                 var fineRuleIds = bill.Fines.Select(f => f.Id).ToList();
                 var fr = fineRules.FirstOrDefault(f => !fineRuleIds.Contains(f.Id) && (f.EndDay.HasValue ? f.StartDay <= totalDays && totalDays <= f.EndDay.Value : f.StartDay <= totalDays));
                 if (fr == null) continue;
-                bill.Fines.Add(new Fine { BillId = bill.Id, FineRuleId = fr.Id });
+                bill.Fines.Add(new Fine { BillId = bill.Id, FineRuleId = fr.Id, CreatedAt = DateTime.Now });
                 somethingChanged = true;
             }
             if(somethingChanged) dbc.SaveChanges();
@@ -75,7 +75,7 @@ namespace OurWaterAPI.Controllers
         {
             var userId = Convert.ToInt32(User.FindFirstValue(ClaimTypes.NameIdentifier));
             var role = User.FindFirstValue(ClaimTypes.Role) ?? "customer";
-            var b = dbc.Bills.Include(b => b.Customer).Include(b => b.Fines).ThenInclude(b => b.FineRule).FirstOrDefault(b => b.Id == id);
+            var b = dbc.Bills.Include(b => b.ConsumptionRecord).Include(b => b.Customer).Include(b => b.Fines).ThenInclude(b => b.FineRule).FirstOrDefault(b => b.Id == id);
             if (b == null) return Helper.err("Not found", 404);
             if (role == "customer" && b.CustomerId != userId) return Helper.err("Forbidden", 403);
             return Helper.res(new
@@ -126,11 +126,15 @@ namespace OurWaterAPI.Controllers
         [Authorize(Roles = "admin")]
         public ActionResult Patch(int id, PatchBillDTO input)
         {
-            var allowedStatus = new[] {"Verified", "Rejected"};
+            var allowedStatus = new[] {"Paid", "Rejected"};
             if (!allowedStatus.Contains(input.status)) return Helper.err("Status not valid");
             if (input.status == "Rejected" && input.rejectionReason.Trim() == "") return Helper.err("Rejection Reason required");
             var b = dbc.Bills.Find(id);
             if (b == null) return Helper.err("Not found", 404);
+            if(b.Status == "Rejected")
+            {
+                b.Deadline = DateTime.Now.AddDays(14);
+            }
             b.Status = input.status;
             b.RejectionReason = input.rejectionReason;
             dbc.SaveChanges();

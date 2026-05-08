@@ -26,14 +26,15 @@ namespace OurWaterAPI.Controllers
         public async Task<ActionResult> Submit(IFormFile img, [FromForm] int customerId, [FromForm] decimal debit)
         {
             var allowedDay = new[] { 1, 2, 3, 4, 5, 6, 7, 26, 27, 28, 29, 30, 31 };
-            if (!allowedDay.Contains(DateTime.Now.Day)) return Helper.err("TOday is not a time to input consumption debit");
+            //if (!allowedDay.Contains(DateTime.Now.Day)) return Helper.err("Today is not a time to input consumption debit");
             if (img == null || img.Length == 0) return Helper.err("Image is required");
             if (debit < 0.000001m) return Helper.err("Debit not valid");
             var userId = Convert.ToInt32(User.FindFirstValue(ClaimTypes.NameIdentifier));
-            var customer = dbc.Users.AsNoTracking().FirstOrDefault(u => u.Id == customerId);
+            var customer = await dbc.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == customerId);
             if (customer == null) return Helper.err("Customer not found");
+            if (customer.Role != "customer") return Helper.err("Not a customer");
             var role = User.FindFirstValue(ClaimTypes.Role) ?? "customer";
-            var rec = dbc.ConsumptionDebitRecords.FirstOrDefault(c => c.CustomerId == customerId && c.Date.Month == DateTime.Now.Month);
+            var rec = await dbc.ConsumptionDebitRecords.FirstOrDefaultAsync(c => c.CustomerId == customerId && c.Date.Month == DateTime.Today.Month && c.Date.Year == DateTime.Today.Year);
             var allowedImg = new[] { "image/png", "image/jpg", "image/jpeg" };
             if (!allowedImg.Contains(img.ContentType)) return Helper.err("The only allowed images are jpg/png");
             if(rec != null)
@@ -52,9 +53,11 @@ namespace OurWaterAPI.Controllers
                     Debit = debit,
                     Status = "Pending",
                     CustomerId = customerId,
-                    Date = DateOnly.FromDateTime(DateTime.Now),
+                    Date = DateOnly.FromDateTime(DateTime.Today),
                     ImagePath = await Helper.uploadFile(img, uploadPath),
                     InputtedBy = userId,
+                    RejectionReason = "",
+                    UpdatedAt = DateTime.Now
                 };
                 dbc.ConsumptionDebitRecords.Add(rec);
             }
@@ -72,11 +75,11 @@ namespace OurWaterAPI.Controllers
             if(role == "officer")
             {
                 query = query.OrderBy(c => c.InputtedBy == userId ? 0 : (c.CorrectedBy == userId ? 1 : 2));
-            } else
+            } else if(role == "customer")
             {
                 query = query.Where(c => c.InputtedBy == userId || c.CustomerId == userId);
             }
-            return Helper.res(query.ToList().Select(c => new
+            return Helper.res(query.OrderByDescending(b => b.UpdatedAt).ToList().Select(c => new
             {
                 id = c.Id,
                 customerName = c.Customer.Fullname,
@@ -99,6 +102,9 @@ namespace OurWaterAPI.Controllers
             if (c == null) return Helper.err("Not found", 404);
             var role = User.FindFirstValue(ClaimTypes.Role) ?? "customer";
             if (role == "customer" && c.CustomerId != userId) return Helper.err("Forbidden", 403);
+            var prevMonth = c.Date.Month == 1 ? 12 : c.Date.Month - 1;
+            var prevYear = prevMonth == 1 ? c.Date.Year - 1 : c.Date.Year;
+            var prevDebit = dbc.ConsumptionDebitRecords.FirstOrDefault(cd => cd.CustomerId == c.CustomerId && cd.Date.Month == prevMonth && cd.Date.Year == prevYear);
             return Helper.res(new
             {
                 id = c.Id,
@@ -106,11 +112,13 @@ namespace OurWaterAPI.Controllers
                 inputtedBy = c.Creator.Fullname,
                 correctedBy = c.Corrector?.Fullname,
                 debit = c.Debit,
+                prevDebit = prevDebit?.Debit,
                 date = c.Date,
                 status = c.Status,
                 location = c.Location,
                 updatedAt = c.UpdatedAt,
                 imagePath = c.ImagePath,
+                rejectionReason = c.RejectionReason,
             });
 
         }
@@ -119,8 +127,11 @@ namespace OurWaterAPI.Controllers
         [Authorize(Roles = "admin,officer")]
         public ActionResult Patch(int id, PatchConsumptionDebitRecord input)
         {
+            var allowed = new[] { "Verified", "Rejected" };
+            if (!allowed.Contains(input.status)) return Helper.err("Status not valid");
             var rec = dbc.ConsumptionDebitRecords.Include(c => c.Creator).Include(c => c.Corrector).FirstOrDefault(c => c.Id == id);
             if (rec == null) return Helper.err("Not found", 404);
+            //if (rec.Status != "Pending") return Helper.err("Status can't be changed");
             var recUser = rec.Corrector ?? rec.Creator;
             var role = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (role == "officer" && recUser.Role == "officer") return Helper.err("Officer can't review other officer inputted record");
@@ -137,6 +148,9 @@ namespace OurWaterAPI.Controllers
                     Deadline = DateTime.Now.AddDays(14),
                     Status = "Pending",
                     Amount = CalculateBillAmount(rec.Debit),
+                    UpdatedAt = DateTime.Now,
+                    CreatedAt = DateTime.Now,
+                    RejectionReason = "",
                 });
             }
             dbc.SaveChanges();

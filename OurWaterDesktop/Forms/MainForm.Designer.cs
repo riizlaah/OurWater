@@ -124,7 +124,7 @@
             dateTimeLb.Dock = DockStyle.Bottom;
             dateTimeLb.Font = new Font("Segoe UI Semibold", 10.2F, FontStyle.Bold, GraphicsUnit.Point, 0);
             dateTimeLb.ForeColor = SystemColors.ControlDarkDark;
-            dateTimeLb.Location = new Point(8, 417);
+            dateTimeLb.Location = new Point(8, 426);
             dateTimeLb.Name = "dateTimeLb";
             dateTimeLb.Size = new Size(582, 23);
             dateTimeLb.TabIndex = 8;
@@ -135,7 +135,7 @@
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(598, 448);
+            ClientSize = new Size(598, 457);
             Controls.Add(dateTimeLb);
             Controls.Add(greetLb);
             Controls.Add(button7);

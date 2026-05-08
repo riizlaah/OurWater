@@ -38,7 +38,7 @@ namespace OurWaterDesktop
             Helper.CurrentSession = result.data;
             username.Text = "";
             password.Text = "";
-            var window = new MainForm();
+            var window = new MainForm(this);
             Hide();
             window.Show();
         }

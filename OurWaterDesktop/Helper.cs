@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.Http.Json;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -20,6 +21,7 @@ namespace OurWaterDesktop
             HttpResponseMessage res;
             var url = $"{addr}api/{route}";
             method = method.ToLower();
+            if (CurrentSession != null) HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", CurrentSession.token);
             if (method == "get")
             {
                 res = await HttpClient.GetAsync(url);
@@ -51,14 +53,30 @@ namespace OurWaterDesktop
                 return (false, ApiResponse<TRes>.Error(ex.Message));
             }
         }
+
+        async public static Task<Bitmap?> FetchImg(string url)
+        {
+            try
+            {
+                var actualUrl = $"{addr}uploads/{url}";
+                var result = await HttpClient.GetByteArrayAsync(actualUrl);
+                using(var ms = new MemoryStream(result))
+                {
+                    var img = Image.FromStream(ms);
+                    return new Bitmap(img);
+                }
+            } catch(Exception ex)
+            {
+                Debug.Write(ex.Message);
+                return null;
+            }
+        }
     }
 
     public class ApiResponse<T> where T : class
     {
         public T? data { get; set; }
         public string message { get; set; }
-
-
 
         public static ApiResponse<T> Error(string msg)
         {

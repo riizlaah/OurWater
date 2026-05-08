@@ -1,4 +1,5 @@
-﻿using System;
+﻿using OurWaterDesktop.Forms;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -13,8 +14,10 @@ namespace OurWaterDesktop.Views
     public partial class MainForm : Form
     {
         private readonly System.Windows.Forms.Timer timer;
-        public MainForm()
+        private readonly Login loginForm;
+        public MainForm(Login login)
         {
+            loginForm = login;
             timer = new System.Windows.Forms.Timer
             {
                 Interval = 1000
@@ -36,17 +39,21 @@ namespace OurWaterDesktop.Views
 
         protected override void OnClosed(EventArgs e)
         {
-            Application.Exit();
+            loginForm.Show();
         }
 
         public void OnViewConsDebitRec(object s, EventArgs e)
         {
-
+            var window = new ViewConsumptionDebitRecordsForm(this);
+            Hide();
+            window.Show();
         }
 
         private void OnViewCustomerBills(object sender, EventArgs e)
         {
-
+            var window = new ViewCustomerBillsForm(this);
+            Hide();
+            window.Show();
         }
 
         private void OnViewProdDebitRecs(object sender, EventArgs e)
