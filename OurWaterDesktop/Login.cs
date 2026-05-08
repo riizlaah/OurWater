@@ -1,3 +1,4 @@
+using OurWaterDesktop.Views;
 using System.Net.Http.Json;
 using System.Net.Sockets;
 
@@ -5,11 +6,8 @@ namespace OurWaterDesktop
 {
     public partial class Login : Form
     {
-        private const string ADDR = "http://localhost:5000/api/";
-        private readonly HttpClient _httpClient;
         public Login()
         {
-            _httpClient = new HttpClient();
             InitializeComponent();
         }
 
@@ -31,21 +29,18 @@ namespace OurWaterDesktop
 
         private async Task TryLogin()
         {
-            var res = await _httpClient.PostAsJsonAsync(ADDR + "users/login", new LoginReq { username = username.Text, password = password.Text });
-            try
+            var (isSuccess, result) = await Helper.JsonReq<LoginReq, LoginRes>("users/login", new LoginReq { username = username.Text, password = password.Text }, "post");
+            if(!isSuccess || result.data == null)
             {
-                var res2 = await res.Content.ReadFromJsonAsync<ApiResponse<LoginResponse>>();
-                if (res2.data == null)
-                {
-                    MessageBox.Show(res2.message);
-                    return;
-                }
-                MessageBox.Show($"Hello {res2.data.fullname}");
+                MessageBox.Show(result.message, "Error");
+                return;
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message, "Error");
-            }
+            Helper.CurrentSession = result.data;
+            username.Text = "";
+            password.Text = "";
+            var window = new MainForm();
+            Hide();
+            window.Show();
         }
     }
 
@@ -56,13 +51,7 @@ namespace OurWaterDesktop
     }
 
 
-    public class ApiResponse<T>
-    {
-        public T? data { get; set; }
-        public string message { get; set; }
-    }
-
-    public class LoginResponse
+    public class LoginRes
     {
         public string fullname { get; set; }
         public string username { get; set; }

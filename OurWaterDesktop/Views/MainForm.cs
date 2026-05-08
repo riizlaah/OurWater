@@ -1,0 +1,77 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace OurWaterDesktop.Views
+{
+    public partial class MainForm : Form
+    {
+        private readonly System.Windows.Forms.Timer timer;
+        public MainForm()
+        {
+            timer = new System.Windows.Forms.Timer
+            {
+                Interval = 1000
+            };
+            timer.Tick += (s, e) =>
+            {
+                dateTimeLb.Text = DateTime.Now.ToString("dddd, dd MMMM yyyy (HH:mm:ss)");
+            };
+            InitializeComponent();
+            greetLb.Text = "Hello " + Helper.CurrentSession?.fullname ?? "Admin";
+            timer.Start();
+            dateTimeLb.Text = DateTime.Now.ToString("dddd, dd MMMM yyyy (HH:mm:ss)");
+        }
+
+        protected override void OnClosing(CancelEventArgs e)
+        {
+            e.Cancel = MessageBox.Show("Are you sure?", "Confirmation", MessageBoxButtons.YesNo) == DialogResult.No;
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            Application.Exit();
+        }
+
+        public void OnViewConsDebitRec(object s, EventArgs e)
+        {
+
+        }
+
+        private void OnViewCustomerBills(object sender, EventArgs e)
+        {
+
+        }
+
+        private void OnViewProdDebitRecs(object sender, EventArgs e)
+        {
+
+        }
+
+        private void OnSubmitProdDebitRec(object sender, EventArgs e)
+        {
+
+        }
+
+        private void OnManageUsers(object sender, EventArgs e)
+        {
+
+        }
+
+        private void OnSettingFineRules(object sender, EventArgs e)
+        {
+
+        }
+
+        private void OnViewWaterUsage(object sender, EventArgs e)
+        {
+
+        }
+    }
+}
