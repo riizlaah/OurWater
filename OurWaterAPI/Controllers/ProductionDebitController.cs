@@ -24,6 +24,7 @@ namespace OurWaterAPI.Controllers
         [Authorize(Roles = "admin")]
         public ActionResult Submit(ProdDebitDTO input)
         {
+            if (input.debit < 0m) return Helper.err("Amount not valid");
             if (dbc.ProductionDebitRecords.Any(p => p.Date == input.date)) return Helper.err("Record already exists");
             var userId = Convert.ToInt32(User.FindFirstValue(ClaimTypes.NameIdentifier));
             var userLocation = dbc.Users.Where(u => u.Id == userId).Select(u => u.Address).First();
@@ -58,6 +59,7 @@ namespace OurWaterAPI.Controllers
         [Authorize(Roles = "admin")]
         public ActionResult Update(int id, ProdDebitDTO input)
         {
+            if (input.debit < 0m) return Helper.err("Amount not valid");
             var rec = dbc.ProductionDebitRecords.Find(id);
             if (rec == null) return Helper.err("Not found", 404);
             rec.Debit = input.debit;

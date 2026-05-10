@@ -28,7 +28,7 @@ namespace OurWaterAPI.Controllers
             var allowedDay = new[] { 1, 2, 3, 4, 5, 6, 7, 26, 27, 28, 29, 30, 31 };
             //if (!allowedDay.Contains(DateTime.Now.Day)) return Helper.err("Today is not a time to input consumption debit");
             if (img == null || img.Length == 0) return Helper.err("Image is required");
-            if (debit < 0.000001m) return Helper.err("Debit not valid");
+            if (debit < 0m) return Helper.err("Debit not valid");
             var userId = Convert.ToInt32(User.FindFirstValue(ClaimTypes.NameIdentifier));
             var customer = await dbc.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == customerId);
             if (customer == null) return Helper.err("Customer not found");

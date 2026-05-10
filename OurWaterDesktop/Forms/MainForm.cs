@@ -78,12 +78,16 @@ namespace OurWaterDesktop.Views
 
         private void OnSettingFineRules(object sender, EventArgs e)
         {
-
+            var window = new ManageFinesForm(this);
+            Hide();
+            window.Show();
         }
 
         private void OnViewWaterUsage(object sender, EventArgs e)
         {
-
+            var window = new ViewWaterUsageForm(this);
+            Hide();
+            window.Show();
         }
     }
 }

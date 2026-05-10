@@ -193,7 +193,7 @@ namespace OurWaterDesktop.Forms
 
         async private Task Create()
         {
-            var (success, result) = await Helper.JsonReq<UserCreate, object>($"users", new UserCreate
+            var (success, result) = await Helper.JsonReq<UserReq, object>($"users", new UserReq
             {
                 username = username.Text.Trim(),
                 fullname = fullname.Text.Trim(),
@@ -212,7 +212,7 @@ namespace OurWaterDesktop.Forms
 
         async private Task Update(int id)
         {
-            var (success, result) = await Helper.JsonReq<UserEdit, object>($"users/{id}", new UserEdit
+            var (success, result) = await Helper.JsonReq<UserReq, object>($"users/{id}", new UserReq
             {
                 username = username.Text.Trim(),
                 fullname = fullname.Text.Trim(),
@@ -273,17 +273,7 @@ namespace OurWaterDesktop.Forms
         public string address { get; set; }
     }
 
-    public class UserEdit
-    {
-        public int id { get; set; }
-        public string username { get; set; }
-        public string fullname { get; set; }
-        public string password { get; set; }
-        public string role { get; set; }
-        public string address { get; set; }
-    }
-
-    public class UserCreate
+    public class UserReq
     {
         public string username { get; set; }
         public string fullname { get; set; }

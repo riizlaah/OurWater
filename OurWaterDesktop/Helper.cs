@@ -74,6 +74,7 @@ namespace OurWaterDesktop
 
         public static void GenerateTableColumns(DataGridView table, string[] headers, string[] bindings)
         {
+            table.RowHeadersVisible = false;
             table.AutoGenerateColumns = false;
             for(int i = 0; i < headers.Length; i++)
             {

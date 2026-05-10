@@ -39,13 +39,13 @@ namespace OurWaterAPI.Controllers
                 var remainingWaterPercentage = (1m - (consumptions[i].Total / productions[i].Total)) * 100m;
                 arr.Add(new WaterReport
                 {
-                    month = new DateTime(actualYear, consumptions[i].Month, 1).ToString("MMMM"),
+                    monthName = new DateTime(actualYear, consumptions[i].Month, 1).ToString("MMMM"),
                     monthNumber = consumptions[i].Month,
-                    totalProdDebit = productions[i].Total,
-                    totalConsDebit = consumptions[i].Total,
-                    remainingWaterPercentage = remainingWaterPercentage,
-                    remainingWater = productions[i].Total - consumptions[i].Total,
-                    consDebitPercentage = 100m - remainingWaterPercentage
+                    totalProdDebit = Math.Round(productions[i].Total, 2),
+                    totalConsDebit = Math.Round(consumptions[i].Total, 2),
+                    remainingWaterPercentage = Math.Round(remainingWaterPercentage, 2),
+                    remainingWater = Math.Round(productions[i].Total - consumptions[i].Total, 2),
+                    consDebitPercentage = Math.Round(100m - remainingWaterPercentage, 2)
                 });
             }
             return Helper.res(arr);
@@ -54,7 +54,7 @@ namespace OurWaterAPI.Controllers
 
     public class WaterReport
     {
-        public string month { get; set; } = null!;
+        public string monthName { get; set; } = null!;
         public int monthNumber { get; set; }
         public decimal totalProdDebit { get; set; }
         public decimal totalConsDebit { get; set; }

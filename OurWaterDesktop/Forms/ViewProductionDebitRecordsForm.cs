@@ -56,11 +56,7 @@ namespace OurWaterDesktop.Views
                 {
                     var window = new SubmitProdDebit(rec);
                     window.ShowDialog();
-                    window.FormClosed += (s, e) =>
-                    {
-                        //await Task.Delay(250);
-                        RefreshData();
-                    };
+                    RefreshData();
                 };
             }
         }

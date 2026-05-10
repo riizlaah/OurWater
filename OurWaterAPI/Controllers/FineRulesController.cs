@@ -51,7 +51,11 @@ namespace OurWaterAPI.Controllers
         [Authorize(Roles = "admin")]
         public ActionResult Create(FineRuleDTO input)
         {
-            if(dbc.FineRules.Any(fr => input.startDay <= fr.EndDay || (input.endDay.HasValue ? input.endDay.Value >= fr.StartDay : false)))
+            if (input.amount <= 0m) return Helper.err("Amount not valid");
+            if (input.startDay < 1) return Helper.err("Start day not valid");
+            if (input.endDay.HasValue ? input.endDay.Value < 1 : false) return Helper.err("End day not valid");
+            if (dbc.FineRules.Any(fr => fr.EndDay == null) && input.endDay == null) return Helper.err("Continuous rule can't exist multiple time");
+            if(dbc.FineRules.Any(fr => input.startDay <= (fr.EndDay ?? 0) || (input.endDay.HasValue ? input.endDay.Value <= fr.StartDay : false) || (fr.EndDay == null && input.startDay > 0)))
             {
                 return Helper.err("Day range collided with other fine rule");
             }
@@ -64,11 +68,15 @@ namespace OurWaterAPI.Controllers
         [Authorize(Roles = "admin")]
         public ActionResult Update(int id, FineRuleDTO input)
         {
-            if (dbc.FineRules.Any(fr => fr.Id != id && (input.startDay <= fr.EndDay || (input.endDay.HasValue ? input.endDay.Value >= fr.StartDay : false))))
+            if (input.amount <= 0m) return Helper.err("Amount not valid");
+            if (input.startDay < 1) return Helper.err("Start day not valid");
+            if (input.endDay.HasValue ? input.endDay.Value < 1 : false) return Helper.err("End day not valid");
+            if (dbc.FineRules.Any(fr => fr.EndDay == null && fr.Id != id) && input.endDay == null) return Helper.err("Continuous rule can't exist multiple time");
+            if (dbc.FineRules.Any(fr => fr.Id != id && (input.startDay <= (fr.EndDay ?? 0) || (input.endDay.HasValue ? input.endDay.Value <= fr.StartDay : false) || (fr.EndDay == null && input.startDay > 0))))
             {
                 return Helper.err("Day range collided with other fine rule");
             }
-            dbc.FineRules.Attach(input.ToEntity(id));
+            dbc.FineRules.Attach(input.ToEntity(id)).State = EntityState.Modified;
             dbc.SaveChanges();
             return Helper.msg();
         }
@@ -88,7 +96,7 @@ namespace OurWaterAPI.Controllers
     public class FineRuleDTO
     {
         [Required] public int startDay { get; set; }
-        [Required] public int? endDay { get; set; } = null;
+        public int? endDay { get; set; } = null;
         [Required] public decimal amount { get; set; }
 
         public FineRule ToEntity()
