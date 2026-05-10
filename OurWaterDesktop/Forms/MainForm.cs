@@ -58,17 +58,22 @@ namespace OurWaterDesktop.Views
 
         private void OnViewProdDebitRecs(object sender, EventArgs e)
         {
-
+            var window = new ViewProductionDebitRecordsForm(this);
+            Hide();
+            window.Show();
         }
 
         private void OnSubmitProdDebitRec(object sender, EventArgs e)
         {
-
+            var dialog = new SubmitProdDebit(null);
+            dialog.ShowDialog();
         }
 
         private void OnManageUsers(object sender, EventArgs e)
         {
-
+            var window = new ManageUsersForm(this);
+            Hide();
+            window.Show();
         }
 
         private void OnSettingFineRules(object sender, EventArgs e)

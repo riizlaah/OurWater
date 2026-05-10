@@ -57,18 +57,24 @@ namespace OurWaterAPI.Controllers
             });
         }
 
+
+        // CRUD
         [HttpGet]
         [Authorize(Roles = "admin")]
-        public ActionResult GetAll(string? search = null)
+        public ActionResult GetAll(string? search = null, string? role = null)
         {
-            var data = new List<User>();
+            var query = dbc.Users.AsQueryable();
+            var availableRoles = new[] { "admin", "officer", "customer" };
+            if(role != null)
+            {
+                if (!availableRoles.Contains(role)) return Helper.err("Role not valid");
+                query = query.Where(u => u.Role == role);
+            }
             if(search != null)
             {
-                data = dbc.Users.Where(u => EF.Functions.Like(u.Username, "%" + search + "%") || EF.Functions.Like(u.Fullname, "%" + search + "%")).ToList();
-            } else
-            {
-                data = dbc.Users.ToList();
+                query = query.Where(u => EF.Functions.Like(u.Username, "%" + search + "%") || EF.Functions.Like(u.Fullname, "%" + search + "%"));
             }
+            var data = query.ToList();
             return Helper.res(data.Select(u => new
             {
                 id = u.Id,

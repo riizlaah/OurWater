@@ -1,6 +1,6 @@
 ﻿namespace OurWaterDesktop.Views
 {
-    partial class ViewConsumptionDebitRecordsForm
+    partial class ViewProductionDebitRecordsForm
     {
         /// <summary>
         /// Required designer variable.
@@ -31,25 +31,30 @@
             label1 = new Label();
             panel1 = new Panel();
             flowLayoutPanel1 = new FlowLayoutPanel();
+            panel2 = new Panel();
+            monthPicker = new ComboBox();
+            yearInp = new NumericUpDown();
             panel1.SuspendLayout();
+            panel2.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)yearInp).BeginInit();
             SuspendLayout();
             // 
             // label1
             // 
             label1.AutoSize = true;
-            label1.Dock = DockStyle.Top;
+            label1.Dock = DockStyle.Left;
             label1.Font = new Font("Segoe UI", 13.8F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label1.Location = new Point(12, 12);
+            label1.Location = new Point(0, 0);
             label1.Name = "label1";
             label1.Padding = new Padding(8, 8, 8, 16);
-            label1.Size = new Size(388, 55);
+            label1.Size = new Size(363, 55);
             label1.TabIndex = 1;
-            label1.Text = "View Consumption Debit Records";
+            label1.Text = "View Production Debit Records";
             // 
             // panel1
             // 
             panel1.Controls.Add(flowLayoutPanel1);
-            panel1.Controls.Add(label1);
+            panel1.Controls.Add(panel2);
             panel1.Dock = DockStyle.Fill;
             panel1.Location = new Point(0, 0);
             panel1.Name = "panel1";
@@ -66,17 +71,48 @@
             flowLayoutPanel1.Size = new Size(903, 513);
             flowLayoutPanel1.TabIndex = 2;
             // 
-            // ViewConsumptionDebitRecordsForm
+            // panel2
+            // 
+            panel2.Controls.Add(monthPicker);
+            panel2.Controls.Add(yearInp);
+            panel2.Controls.Add(label1);
+            panel2.Dock = DockStyle.Top;
+            panel2.Location = new Point(12, 12);
+            panel2.Name = "panel2";
+            panel2.Size = new Size(903, 55);
+            panel2.TabIndex = 3;
+            // 
+            // monthPicker
+            // 
+            monthPicker.DropDownStyle = ComboBoxStyle.DropDownList;
+            monthPicker.FormattingEnabled = true;
+            monthPicker.Location = new Point(593, 21);
+            monthPicker.Name = "monthPicker";
+            monthPicker.Size = new Size(151, 28);
+            monthPicker.TabIndex = 3;
+            monthPicker.SelectedIndexChanged += OnMonthChanged;
+            // 
+            // yearInp
+            // 
+            yearInp.Location = new Point(750, 22);
+            yearInp.Name = "yearInp";
+            yearInp.Size = new Size(150, 27);
+            yearInp.TabIndex = 2;
+            yearInp.ValueChanged += OnYearChanged;
+            // 
+            // ViewProductionDebitRecordsForm
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(927, 592);
             Controls.Add(panel1);
-            Name = "ViewConsumptionDebitRecordsForm";
+            Name = "ViewProductionDebitRecordsForm";
             StartPosition = FormStartPosition.CenterScreen;
-            Text = "ViewConsumptionDebitRecordsForm";
+            Text = "ViewProductionDebitRecordsForm";
             panel1.ResumeLayout(false);
-            panel1.PerformLayout();
+            panel2.ResumeLayout(false);
+            panel2.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)yearInp).EndInit();
             ResumeLayout(false);
         }
 
@@ -84,5 +120,8 @@
         private Label label1;
         private Panel panel1;
         private FlowLayoutPanel flowLayoutPanel1;
+        private Panel panel2;
+        private ComboBox monthPicker;
+        private NumericUpDown yearInp;
     }
 }

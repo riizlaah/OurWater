@@ -8,7 +8,7 @@ namespace OurWaterAPI
         {
             return new ObjectResult(new {data, message})
             {
-                StatusCode = 200
+                StatusCode = code
             };
         }
         public static ObjectResult err(string message, int code = 400)

@@ -71,6 +71,20 @@ namespace OurWaterDesktop
                 return null;
             }
         }
+
+        public static void GenerateTableColumns(DataGridView table, string[] headers, string[] bindings)
+        {
+            table.AutoGenerateColumns = false;
+            for(int i = 0; i < headers.Length; i++)
+            {
+                var col = new DataGridViewTextBoxColumn();
+                col.HeaderText = headers[i];
+                col.Name = headers[i];
+                col.DataPropertyName = bindings[i];
+                col.ReadOnly = true;
+                table.Columns.Add(col);
+            }
+        }
     }
 
     public class ApiResponse<T> where T : class

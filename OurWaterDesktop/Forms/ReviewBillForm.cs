@@ -41,9 +41,10 @@ namespace OurWaterDesktop.Forms
             rejectionReason.Text = rec.rejectionReason;
             originalAmount.Text = $"Original Amount : {rec.originalAmount:Rp#,##0;(Rp#,##0);Rp0}";
             fineAmount.Text = $"Fine Amount : {rec.extraFine:Rp#,##0;(Rp#,##0);Rp0}";
-            fineDetails.DataSource = rec.fines;
+            if (rec.fines.Length > 0) fineDetails.DataSource = rec.fines;
+            else fineDetails.Hide();
             totalAmount.Text = $"Total Amount : {rec.totalAmount:Rp#,##0;(Rp#,##0);Rp0}";
-            if (rec.status != "Pending")
+            if (rec.status != "Paid Unconfirmed")
             {
                 reject.Hide();
                 verify.Hide();
@@ -64,7 +65,42 @@ namespace OurWaterDesktop.Forms
 
         }
 
-        //protected
+        protected override void OnClosed(EventArgs e)
+        {
+            parent.Show();
+        }
+
+        private void onVerify(object sender, EventArgs e)
+        {
+            UpdateStatus("Paid");
+        }
+
+        private void onReject(object sender, EventArgs e)
+        {
+            if(rejectionReason.Text.Trim() == "")
+            {
+                MessageBox.Show("Rejection reason required");
+                return;
+            }
+            UpdateStatus("Rejected", rejectionReason.Text.Trim());
+        }
+
+        async private Task UpdateStatus(string status, string rejection = "")
+        {
+            var (isSuccess, result) = await Helper.JsonReq<PatchConsDebitRec, object>($"Bills/{id}", new PatchConsDebitRec
+            {
+                rejectionReason = rejection,
+                status = status
+            }, "patch");
+            if (isSuccess)
+            {
+                FetchData();
+            }
+            else
+            {
+                MessageBox.Show(result.message, "Error");
+            }
+        }
     }
 
 

@@ -63,6 +63,7 @@
             reject.TabIndex = 18;
             reject.Text = "Reject";
             reject.UseVisualStyleBackColor = true;
+            reject.Click += onReject;
             // 
             // verify
             // 
@@ -72,6 +73,7 @@
             verify.TabIndex = 17;
             verify.Text = "Verify";
             verify.UseVisualStyleBackColor = true;
+            verify.Click += onVerify;
             // 
             // rejectionReason
             // 
@@ -84,9 +86,9 @@
             // image
             // 
             image.BackColor = SystemColors.ControlLight;
-            image.Location = new Point(359, 12);
+            image.Location = new Point(389, 12);
             image.Name = "image";
-            image.Size = new Size(494, 578);
+            image.Size = new Size(535, 578);
             image.SizeMode = PictureBoxSizeMode.Zoom;
             image.TabIndex = 15;
             image.TabStop = false;
@@ -169,7 +171,7 @@
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(865, 606);
+            ClientSize = new Size(936, 606);
             Controls.Add(debitLb);
             Controls.Add(deadline);
             Controls.Add(fineDetails);

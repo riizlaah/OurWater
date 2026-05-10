@@ -22,8 +22,8 @@ namespace OurWaterDesktop.UserControls
             headerLb.Text = $"{rec.createdAt:dd-MM-yyyy} - ({rec.status})";
             customerName.Text = $"Customer Name : {rec.customer.name}";
             debitLb.Text = $"Debit : {rec.consumptionDebitRecord.debit:F2}";
-            totalAmount.Text = $"Submitted By : {rec.totalAmount}";
-            deadline.Text = $"Location : {rec.deadline:dd MMMM yyyy}";
+            totalAmount.Text = $"Total Amount : {rec.totalAmount:Rp#,##0;(Rp#,##0);Rp0}";
+            deadline.Text = $"Deadline : {rec.deadline:dd MMMM yyyy}";
         }
 
         protected override void OnClick(EventArgs e)

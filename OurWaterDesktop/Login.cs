@@ -35,6 +35,11 @@ namespace OurWaterDesktop
                 MessageBox.Show(result.message, "Error");
                 return;
             }
+            if(result.data.role != "admin")
+            {
+                MessageBox.Show("Not an admin");
+                return;
+            }
             Helper.CurrentSession = result.data;
             username.Text = "";
             password.Text = "";

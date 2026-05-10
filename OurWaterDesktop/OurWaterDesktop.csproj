@@ -9,10 +9,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Models\" />
-  </ItemGroup>
-
-  <ItemGroup>
+    <Compile Update="Forms\ViewProductionDebitRecordsForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Update="UserControls\BillCard.cs">
       <SubType>UserControl</SubType>
     </Compile>
