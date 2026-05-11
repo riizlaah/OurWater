@@ -1,10 +1,13 @@
 package nr.dev.ourwater2
 
+import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.BitmapFactory
 import android.util.Log
-import androidx.compose.runtime.mutableStateOf
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
@@ -65,6 +68,30 @@ data class ConsumptionDebit(
     val rejectionReason: String = ""
 )
 
+data class ShortConsumptionDebit(
+    val id: Int,
+    val debit: Double
+)
+
+data class Customer(
+    val name: String,
+    val address: String = ""
+)
+
+data class Bill(
+    val id: Int,
+    val consumptionDebit: ShortConsumptionDebit,
+    val customer: Customer,
+    val originalAmount: Double,
+    val extraFine: Double,
+    val totalAmount: Double,
+    val deadline: LocalDateTime,
+    val status: String,
+    val createdAt: LocalDateTime,
+    val fines: List<String> = emptyList(),
+    val rejectionReason: String = "",
+    val imagePath: String? = null,
+)
 
 object HttpClient {
     const val addr = "http://10.0.2.2:5000"
@@ -213,7 +240,7 @@ object HttpClient {
         return try {
             val json = JSONObject(res.body)
             if (res.code == 200) {
-                if(json.getJSONObject("data").getString("role") == "admin") {
+                if (json.getJSONObject("data").getString("role") == "admin") {
                     "Not for admin"
                 } else {
                     token = json.getJSONObject("data").getString("token")
@@ -250,14 +277,14 @@ object HttpClient {
 
     suspend fun getConsumptionDebits(): List<ConsumptionDebit> {
         val res = jsonReq("consumptiondebits")
-        if(res.body == null || res.code != 200) return emptyList()
+        if (res.body == null || res.code != 200) return emptyList()
         val json = JSONObject(res.body).getJSONArray("data")
         return json.bindList<ConsumptionDebit>()
     }
 
     suspend fun getConsumptionDebit(id: Int): ConsumptionDebit? {
         val res = jsonReq("consumptiondebits/$id")
-        if(res.body == null || res.code != 200) return null
+        if (res.body == null || res.code != 200) return null
         return try {
             val json = JSONObject(res.body).getJSONObject("data")
             json.bind<ConsumptionDebit>()
@@ -265,10 +292,29 @@ object HttpClient {
             null
         }
     }
+
+    suspend fun getBills(): List<Bill> {
+        val res = jsonReq("bills")
+        println(res)
+        if (res.body == null || res.code != 200) return emptyList()
+        val json = JSONObject(res.body).getJSONArray("data")
+        return json.bindList<Bill>()
+    }
+
+    suspend fun getBill(id: Int): Bill? {
+        val res = jsonReq("bills/$id")
+        if (res.body == null || res.code != 200) return null
+        return try {
+            val json = JSONObject(res.body).getJSONObject("data")
+            json.bind<Bill>()
+        } catch (e: Exception) {
+            null
+        }
+    }
 }
 
 inline fun <reified T> JSONObject.bind(): T {
-    return when(T::class) {
+    return when (T::class) {
         ConsumptionDebit::class -> {
             val detailed = has("imagePath")
             ConsumptionDebit(
@@ -281,11 +327,38 @@ inline fun <reified T> JSONObject.bind(): T {
                 getString("status"),
                 getString("location"),
                 LocalDateTime.parse(getString("updatedAt")),
-                if(detailed && !isNull("prevDebit")) getDouble("prevDebit") else null,
-                if(detailed) getString("imagePath") else "",
-                if(detailed) getString("rejectionReason") else ""
+                if (detailed && !isNull("prevDebit")) getDouble("prevDebit") else null,
+                if (detailed) getString("imagePath") else "",
+                if (detailed) getString("rejectionReason") else ""
             )
         }
+
+        Bill::class -> {
+            val detailed = has("imagePath")
+            val consumptionDebit = getJSONObject("consumptionDebitRecord")
+            val customer = getJSONObject("customer")
+            Bill(
+                getInt("id"),
+                ShortConsumptionDebit(
+                    consumptionDebit.getInt("id"),
+                    consumptionDebit.getDouble("debit")
+                ),
+                Customer(
+                    customer.getString("name"),
+                    if (detailed) customer.getString("address") else ""
+                ),
+                getDouble("originalAmount"),
+                getDouble("extraFine"),
+                getDouble("totalAmount"),
+                LocalDateTime.parse(getString("deadline")),
+                getString("status"),
+                LocalDateTime.parse(getString("createdAt")),
+                if (detailed) getJSONArray("fines").getStringList() else emptyList(),
+                if (detailed) getString("rejectionReason") else "",
+                if (detailed && !isNull("imagePath")) getString("imagePath") else ""
+            )
+        }
+
         else -> {}
     } as T
 }
@@ -293,10 +366,34 @@ inline fun <reified T> JSONObject.bind(): T {
 
 inline fun <reified T> JSONArray.bindList(): List<T> {
     val arr = mutableListOf<T>()
-    for(i in 0 until length()) {
-        val obj = getJSONObject(i)
-        arr.add(obj.bind<T>())
+    for (i in 0 until length()) {
+        when (T::class) {
+            String::class -> arr.add(getString(i) as T)
+            Int::class -> arr.add(getInt(i) as T)
+            Double::class -> arr.add(getDouble(i) as T)
+            Boolean::class -> arr.add(getBoolean(i) as T)
+            else -> {
+                val obj = getJSONObject(i)
+                arr.add(obj.bind<T>())
+            }
+        }
+
     }
     return arr
 }
 
+fun JSONArray.getStringList(): List<String> {
+    val arr = mutableListOf<String>()
+    for (i in 0 until length()) {
+        arr.add(getString(i))
+    }
+    return arr
+}
+
+class PickJpgPngContract : ActivityResultContracts.GetContent() {
+    override fun createIntent(context: Context, input: String): Intent {
+        return super.createIntent(context, input).apply {
+            putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("image/jpeg", "image/png"))
+        }
+    }
+}

@@ -13,11 +13,21 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun ErrText(msg: String, modifier: Modifier = Modifier) {
-    if(msg.isNotEmpty()) Text(msg, color = Color.Red, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
+    if (msg.isNotEmpty()) Text(
+        msg,
+        color = Color.Red,
+        modifier = Modifier.fillMaxWidth(),
+        textAlign = TextAlign.Center
+    )
 }
 
 @Composable
-fun LoadingOrContent(loading: Boolean, content: @Composable () -> Unit, color: Color = Color.White, size: Dp = 24.dp) {
-    if(loading) CircularProgressIndicator(color = color, modifier = Modifier.size(size))
+fun LoadingOrContent(
+    loading: Boolean,
+    content: @Composable () -> Unit,
+    color: Color = Color.White,
+    size: Dp = 24.dp
+) {
+    if (loading) CircularProgressIndicator(color = color, modifier = Modifier.size(size))
     else content()
 }

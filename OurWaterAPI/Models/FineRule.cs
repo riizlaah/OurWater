@@ -26,4 +26,12 @@ public partial class FineRule
     }
 
     public string DisplayStr => $"{StartDay}-{EndDayStr} day = {FineAmount:Rp#,##0;(Rp#,##0);Rp0} / day";
+
+    public bool IsInEffectiveRange(double totalDays)
+    {
+        if (EndDay.HasValue) {
+            return StartDay <= totalDays && totalDays <= EndDay.Value;
+        }
+        return StartDay <= totalDays;
+    }
 }

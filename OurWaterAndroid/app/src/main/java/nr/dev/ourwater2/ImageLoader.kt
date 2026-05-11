@@ -66,13 +66,20 @@ fun NetImage(
             )
             Box(modifier.background(bgColor))
         }
+
         error -> {
             Box(modifier) {
                 Text("Image failed to load")
             }
         }
+
         img != null -> {
-            Image(img!!, contentDescription = contentDescription, modifier = modifier, contentScale = contentScale)
+            Image(
+                img!!,
+                contentDescription = contentDescription,
+                modifier = modifier,
+                contentScale = contentScale
+            )
         }
     }
 }

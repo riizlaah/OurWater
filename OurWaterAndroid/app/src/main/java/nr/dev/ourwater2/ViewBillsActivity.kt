@@ -17,14 +17,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -37,20 +33,19 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import nr.dev.ourwater2.ui.theme.OurWater2Theme
+import java.text.NumberFormat
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 
-class HomeActivity : ComponentActivity() {
+class ViewBillsActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         HttpClient.sharedPrefs = getSharedPreferences("prefs", MODE_PRIVATE)
@@ -62,17 +57,17 @@ class HomeActivity : ComponentActivity() {
                     var refreshing by remember { mutableStateOf(false) }
                     val ctx = LocalContext.current
                     val allowedSubmitDays = (1..7) + (26..31)
-                    val consumptionDebits = remember { mutableStateListOf<ConsumptionDebit>() }
+                    val bills = remember { mutableStateListOf<Bill>() }
 
                     LaunchedEffect(Unit) {
-                        consumptionDebits.clear()
-                        consumptionDebits.addAll(HttpClient.getConsumptionDebits())
+                        bills.clear()
+                        bills.addAll(HttpClient.getBills())
                     }
 
                     LaunchedEffect(refreshing) {
                         if (refreshing) {
-                            consumptionDebits.clear()
-                            consumptionDebits.addAll(HttpClient.getConsumptionDebits())
+                            bills.clear()
+                            bills.addAll(HttpClient.getBills())
                             refreshing = false
                         }
                     }
@@ -94,65 +89,24 @@ class HomeActivity : ComponentActivity() {
                             Row(
                                 Modifier
                                     .fillMaxWidth()
-                                    .padding(bottom = 12.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                IconButton({
-                                    HttpClient.token = ""
-                                    HttpClient.saveToken()
-                                    val intent = Intent(ctx, MainActivity::class.java)
-                                    intent.flags =
-                                        Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                                    startActivity(intent)
-                                }) {
-                                    Icon(
-                                        painterResource(R.drawable.logout),
-                                        contentDescription = "Log out",
-                                        modifier = Modifier.rotate(180f),
-                                        tint = Color.Red
-                                    )
-                                }
-                                Spacer(Modifier.width(12.dp))
-                                Text(
-                                    "Hello ${HttpClient.user?.fullname ?: "User"}!",
-                                    fontSize = MaterialTheme.typography.headlineLarge.fontSize,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                            Row(
-                                Modifier
-                                    .fillMaxWidth()
                                     .padding(bottom = 24.dp),
                                 horizontalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
-                                // if(allowedSubmitDays.contains(LocalDate.now().dayOfMonth))
-                                Button(
-                                    {},
+                                OutlinedButton(
+                                    { finish() },
                                     modifier = Modifier.weight(1f),
                                     shape = RoundedCornerShape(12.dp)
                                 ) {
-                                    Text("Submit Consumption Debit")
-                                }
-                                if (HttpClient.user?.role == "customer") {
-                                    OutlinedButton(
-                                        {
-                                            val intent = Intent(ctx, ViewBillsActivity::class.java)
-                                            startActivity(intent)
-                                        },
-                                        modifier = Modifier.weight(1f),
-                                        shape = RoundedCornerShape(12.dp)
-                                    ) {
-                                        Text("Bills")
-                                    }
+                                    Text("Back")
                                 }
                             }
                             Text(
-                                "Consumption Debit",
+                                "Bills",
                                 fontSize = MaterialTheme.typography.headlineSmall.fontSize,
                                 fontWeight = FontWeight.SemiBold
                             )
                             LazyColumn(Modifier.weight(1f)) {
-                                items(consumptionDebits) { item ->
+                                items(bills) { item ->
                                     Column(
                                         Modifier
                                             .padding(vertical = 12.dp)
@@ -160,7 +114,7 @@ class HomeActivity : ComponentActivity() {
                                             .clickable(onClick = {
                                                 val intent = Intent(
                                                     ctx,
-                                                    ConsumptionDebitDetailActivity::class.java
+                                                    BillPaymentActivity::class.java
                                                 )
                                                 intent.putExtra("id", item.id)
                                                 startActivity(intent)
@@ -171,19 +125,32 @@ class HomeActivity : ComponentActivity() {
                                             .padding(16.dp)
                                     ) {
                                         Text(
-                                            "${item.date.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"))} - (${item.status})",
+                                            "${item.createdAt.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"))} - (${item.status})",
                                             fontSize = MaterialTheme.typography.titleLarge.fontSize,
                                             fontWeight = FontWeight.Bold
                                         )
                                         Spacer(Modifier.height(24.dp))
-                                        if (HttpClient.user?.role != "customer") {
-                                            Text("Customer Name : ${item.customerName}")
-                                            Text("Location : ${item.location}")
+                                        val locale = Locale("in", "ID")
+                                        val currencyFormat =
+                                            NumberFormat.getCurrencyInstance(locale)
+                                        Text("Consumption Debit : ${"%.2f".format(item.consumptionDebit.debit)} M³")
+                                        Text("Base Amount : ${currencyFormat.format(item.originalAmount)}")
+                                        if (item.extraFine > 0) {
+                                            Text("Fine Amount : ${currencyFormat.format(item.extraFine)}")
                                         }
-                                        val inputtedBy =
-                                            if (item.inputtedBy == HttpClient.user?.fullname) "You" else item.inputtedBy
-                                        Text("Inputted By : ${inputtedBy}")
-                                        Text("Debit : ${"%.2f".format(item.debit)} M³")
+                                        Text(
+                                            "Total Amount : ${currencyFormat.format(item.totalAmount)}",
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Text(
+                                            "Deadline : ${
+                                                item.deadline.format(
+                                                    DateTimeFormatter.ofPattern(
+                                                        "dd-MM-yyyy"
+                                                    )
+                                                )
+                                            }"
+                                        )
                                     }
                                 }
                             }

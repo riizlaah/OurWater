@@ -40,12 +40,18 @@ namespace OurWaterAPI.Controllers
             var somethingChanged = false;
             foreach(var bill in bills2)
             {
-                var totalDays = (now - bill.CreatedAt).TotalDays;
-                var fineRuleIds = bill.Fines.Select(f => f.Id).ToList();
-                var fr = fineRules.FirstOrDefault(f => !fineRuleIds.Contains(f.Id) && (f.EndDay.HasValue ? f.StartDay <= totalDays && totalDays <= f.EndDay.Value : f.StartDay <= totalDays));
-                if (fr == null) continue;
-                bill.Fines.Add(new Fine { BillId = bill.Id, FineRuleId = fr.Id, CreatedAt = DateTime.Now });
-                somethingChanged = true;
+                if (bill.Status == "Paid") continue;
+                var totalDays = (now - bill.Deadline).TotalDays;
+                var billFineRuleIds = bill.Fines.Select(f => f.FineRuleId);
+                var newFineRules = fineRules.ExceptBy(billFineRuleIds, fr => fr.Id);
+                foreach(var fr in newFineRules)
+                {
+                    if(fr.IsInEffectiveRange(totalDays))
+                    {
+                        bill.Fines.Add(new Fine { BillId = bill.Id, FineRuleId = fr.Id, CreatedAt = DateTime.Now });
+                        somethingChanged = true;
+                    }
+                }
             }
             if(somethingChanged) dbc.SaveChanges();
             return Helper.res(bills2.Select(b => new
@@ -65,7 +71,8 @@ namespace OurWaterAPI.Controllers
                 totalAmount = b.TotalPrice,
                 deadline = b.Deadline,
                 status = b.Status,
-                createdAt = b.CreatedAt
+                createdAt = b.CreatedAt,
+                updatedAt = b.UpdatedAt
             }));
         }
 
@@ -78,6 +85,25 @@ namespace OurWaterAPI.Controllers
             var b = dbc.Bills.Include(b => b.ConsumptionRecord).Include(b => b.Customer).Include(b => b.Fines).ThenInclude(b => b.FineRule).FirstOrDefault(b => b.Id == id);
             if (b == null) return Helper.err("Not found", 404);
             if (role == "customer" && b.CustomerId != userId) return Helper.err("Forbidden", 403);
+
+            if (b.Status != "Paid")
+            {
+                var fineRules = dbc.FineRules.ToList();
+                var somethingChanged = false;
+                var totalDays = (DateTime.Now - b.Deadline).TotalDays;
+                var billFineRuleIds = b.Fines.Select(f => f.FineRuleId);
+                var newFineRules = fineRules.ExceptBy(billFineRuleIds, fr => fr.Id);
+                foreach (var fr in newFineRules)
+                {
+                    if (fr.IsInEffectiveRange(totalDays))
+                    {
+                        b.Fines.Add(new Fine { BillId = b.Id, FineRuleId = fr.Id, CreatedAt = DateTime.Now });
+                        somethingChanged = true;
+                    }
+                }
+                if(somethingChanged) dbc.SaveChanges();
+            }
+
             return Helper.res(new
             {
                 id = b.Id,
@@ -99,7 +125,8 @@ namespace OurWaterAPI.Controllers
                 status = b.Status,
                 rejectionReason = b.RejectionReason,
                 imagePath = b.ImagePath,
-                createdAt = b.CreatedAt
+                createdAt = b.CreatedAt,
+                updatedAt = b.UpdatedAt
             });
         }
 
