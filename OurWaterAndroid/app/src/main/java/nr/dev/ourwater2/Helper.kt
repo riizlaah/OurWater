@@ -19,6 +19,7 @@ import org.json.JSONObject
 import java.io.ByteArrayOutputStream
 import java.net.HttpURLConnection
 import java.net.URL
+import java.net.URLEncoder
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -91,6 +92,21 @@ data class Bill(
     val fines: List<String> = emptyList(),
     val rejectionReason: String = "",
     val imagePath: String? = null,
+)
+
+data class Customer2(
+    val id: Int,
+    val name: String,
+    val address: String
+)
+
+data class SubmittedConsumptionDebit(
+    val id: Int,
+    val debit: Double,
+    val status: String,
+    val imagePath: String?,
+    val rejectionReason: String,
+    val customer: Customer2
 )
 
 object HttpClient {
@@ -216,11 +232,13 @@ object HttpClient {
                     write(file.bytes)
                     write(crlf)
                 }
+                outputStream.run {
+                    write(twoH)
+                    write(boundaryBytes)
+                    write(twoH)
+                    write(crlf)
+                }
             }
-            outputStream.write(twoH)
-            outputStream.write(boundaryBytes)
-            outputStream.write(twoH)
-            outputStream.write(crlf)
 
             val bytes = outputStream.toByteArray()
             var headers = mapOf("Content-Type" to "multipart/form-data; boundary=$boundary")
@@ -271,6 +289,7 @@ object HttpClient {
             )
             res.code == 200
         } catch (e: Exception) {
+            e.printStackTrace()
             false
         }
     }
@@ -289,13 +308,13 @@ object HttpClient {
             val json = JSONObject(res.body).getJSONObject("data")
             json.bind<ConsumptionDebit>()
         } catch (e: Exception) {
+            e.printStackTrace()
             null
         }
     }
 
     suspend fun getBills(): List<Bill> {
         val res = jsonReq("bills")
-        println(res)
         if (res.body == null || res.code != 200) return emptyList()
         val json = JSONObject(res.body).getJSONArray("data")
         return json.bindList<Bill>()
@@ -308,6 +327,29 @@ object HttpClient {
             val json = JSONObject(res.body).getJSONObject("data")
             json.bind<Bill>()
         } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    suspend fun getCustomers(search: String): List<Customer2> {
+        if (search.trim().isEmpty()) return emptyList()
+        val res = jsonReq("users/customers?search=" + withContext(Dispatchers.IO) {
+            URLEncoder.encode(search, "UTF-8")
+        })
+        if (res.body == null || res.code != 200) return emptyList()
+        val json = JSONObject(res.body).getJSONArray("data")
+        return json.bindList<Customer2>()
+    }
+
+    suspend fun getSubmittedConsumptionDebit(id: Int): SubmittedConsumptionDebit? {
+        val res = jsonReq("consumptiondebits/customer/$id")
+        if (res.body == null || res.code != 200) return null
+        return try {
+            val json = JSONObject(res.body).getJSONObject("data")
+            json.bind<SubmittedConsumptionDebit>()
+        } catch (e: Exception) {
+            e.printStackTrace()
             null
         }
     }
@@ -356,6 +398,22 @@ inline fun <reified T> JSONObject.bind(): T {
                 if (detailed) getJSONArray("fines").getStringList() else emptyList(),
                 if (detailed) getString("rejectionReason") else "",
                 if (detailed && !isNull("imagePath")) getString("imagePath") else ""
+            )
+        }
+
+        Customer2::class -> {
+            Customer2(getInt("id"), getString("name"), getString("address"))
+        }
+
+        SubmittedConsumptionDebit::class -> {
+            val cust = getJSONObject("customer")
+            SubmittedConsumptionDebit(
+                getInt("id"),
+                getDouble("debit"),
+                getString("status"),
+                if (isNull("imagePath")) null else getString("imagePath"),
+                getString("rejectionReason"),
+                Customer2(cust.getInt("id"), cust.getString("name"), cust.getString("address"))
             )
         }
 

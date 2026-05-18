@@ -53,7 +53,6 @@ import java.time.format.DateTimeFormatter
 class HomeActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        HttpClient.sharedPrefs = getSharedPreferences("prefs", MODE_PRIVATE)
         enableEdgeToEdge()
         setContent {
             OurWater2Theme {

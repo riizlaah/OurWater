@@ -48,7 +48,6 @@ import java.util.Locale
 class ViewBillsActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        HttpClient.sharedPrefs = getSharedPreferences("prefs", MODE_PRIVATE)
         enableEdgeToEdge()
         setContent {
             OurWater2Theme {

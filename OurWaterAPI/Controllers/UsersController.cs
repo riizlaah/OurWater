@@ -93,8 +93,7 @@ namespace OurWaterAPI.Controllers
             return Helper.res(data.Select(u => new
             {
                 id = u.Id,
-                username = u.Username,
-                fullname = u.Fullname,
+                name = u.Fullname,
                 address = u.Address,
             }));
         }
@@ -140,7 +139,7 @@ namespace OurWaterAPI.Controllers
                 return Helper.err("Username has been taken");
             }
             var user = input.ToEntity(id);
-            dbc.Users.Attach(user).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
+            dbc.Users.Attach(user).State = EntityState.Modified;
             dbc.SaveChanges();
             return Helper.msg("User updated");
 
@@ -153,6 +152,7 @@ namespace OurWaterAPI.Controllers
             var user = dbc.Users.Find(id);
             if (user == null) return Helper.err("User not found", 404);
             dbc.Users.Remove(user);
+            dbc.SaveChanges();
             return Helper.msg("User deleted");
         }
 

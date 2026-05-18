@@ -130,7 +130,7 @@ namespace OurWaterAPI.Controllers
             });
         }
 
-        [HttpPost("{id}")]
+        [HttpPost("{id}/pay")]
         [Authorize(Roles = "customer")]
         public async Task<ActionResult> Pay(int id, IFormFile img)
         {

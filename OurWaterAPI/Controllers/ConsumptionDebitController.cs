@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OurWaterAPI.Models;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 using System.Security.Claims;
 
 namespace OurWaterAPI.Controllers
@@ -28,7 +29,7 @@ namespace OurWaterAPI.Controllers
             var allowedDay = new[] { 1, 2, 3, 4, 5, 6, 7, 26, 27, 28, 29, 30, 31 };
             //if (!allowedDay.Contains(DateTime.Now.Day)) return Helper.err("Today is not a time to input consumption debit");
             if (img == null || img.Length == 0) return Helper.err("Image is required");
-            if (debit < 0m) return Helper.err("Debit not valid");
+            if (debit <= 0m) return Helper.err("Debit not valid");
             var userId = Convert.ToInt32(User.FindFirstValue(ClaimTypes.NameIdentifier));
             var customer = await dbc.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == customerId);
             if (customer == null) return Helper.err("Customer not found");
@@ -63,6 +64,59 @@ namespace OurWaterAPI.Controllers
             }
             await dbc.SaveChangesAsync();
             return Helper.msg();
+        }
+
+        [HttpPut("{id}")]
+        [Authorize(Roles = "officer")]
+        async public Task<ActionResult> Update(int id, IFormFile img, [FromForm] int customerId, [FromForm] decimal debit)
+        {
+            var allowedDay = new[] { 1, 2, 3, 4, 5, 6, 7, 26, 27, 28, 29, 30, 31 };
+            //if (!allowedDay.Contains(DateTime.Now.Day)) return Helper.err("Today is not a time to input consumption debit");
+            if (img == null || img.Length == 0) return Helper.err("Image is required");
+            var allowedImg = new[] { "image/png", "image/jpeg" };
+            if (!allowedImg.Contains(img.ContentType)) return Helper.err("The only allowed images are jpg/png");
+            if (debit <= 0m) return Helper.err("Debit not valid");
+            var userId = Convert.ToInt32(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            var customer = await dbc.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == customerId);
+            if (customer == null) return Helper.err("Customer not found");
+            if (customer.Role != "customer") return Helper.err("Not a customer");
+            var role = User.FindFirstValue(ClaimTypes.Role) ?? "customer";
+            var rec = await dbc.ConsumptionDebitRecords.FindAsync(id);
+            if (rec == null) return Helper.err("Not found", 404);
+            if (userId == customerId) return Helper.err("Customer can't correcting the submitted debit record");
+            rec.Debit = debit;
+            rec.CorrectedBy = userId;
+            rec.CustomerId = customerId;
+            rec.ImagePath = await Helper.uploadFile(img, uploadPath, rec.ImagePath);
+            rec.Status = "Pending";
+            rec.UpdatedAt = DateTime.Now;
+            await dbc.SaveChangesAsync();
+            
+            return Helper.msg();
+        }
+
+        [HttpGet("customer/{id}")]
+        [Authorize(Roles = "officer")]
+        public ActionResult GetByCustomerId(int id)
+        {
+            var currYear = DateTime.Today.Year;
+            var currMonth = DateTime.Today.Month;
+            var rec = dbc.ConsumptionDebitRecords.Include(c => c.Customer).FirstOrDefault(c => c.CustomerId == id && c.Date.Year == currYear && c.Date.Month == currMonth);
+            if (rec == null) return Helper.err("Not found", 404);
+            return Helper.res(new
+            {
+                id = rec.Id,
+                debit = rec.Debit,
+                imagePath = rec.ImagePath,
+                status = rec.Status,
+                rejectionReason = rec.RejectionReason,
+                customer = new
+                {
+                    id = rec.CustomerId,
+                    name = rec.Customer.Fullname,
+                    address = rec.Customer.Address
+                }
+            });
         }
 
         [HttpGet]
