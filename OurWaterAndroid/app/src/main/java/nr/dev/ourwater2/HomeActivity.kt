@@ -48,6 +48,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import nr.dev.ourwater2.ui.theme.OurWater2Theme
+import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 class HomeActivity : ComponentActivity() {
@@ -124,13 +125,17 @@ class HomeActivity : ComponentActivity() {
                                     .padding(bottom = 24.dp),
                                 horizontalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
-                                // if(allowedSubmitDays.contains(LocalDate.now().dayOfMonth))
-                                Button(
-                                    {},
-                                    modifier = Modifier.weight(1f),
-                                    shape = RoundedCornerShape(12.dp)
-                                ) {
-                                    Text("Submit Consumption Debit")
+                                if(allowedSubmitDays.contains(LocalDate.now().dayOfMonth)) {
+                                    Button(
+                                        {
+                                            val intent = Intent(ctx, SubmitConsumptionDebit::class.java)
+                                            startActivity(intent)
+                                        },
+                                        modifier = Modifier.weight(1f),
+                                        shape = RoundedCornerShape(12.dp)
+                                    ) {
+                                        Text("Submit Consumption Debit")
+                                    }
                                 }
                                 if (HttpClient.user?.role == "customer") {
                                     OutlinedButton(

@@ -27,7 +27,7 @@ namespace OurWaterDesktop.Forms
                 RefreshData(search.Text);
             };
             InitializeComponent();
-            Helper.GenerateTableColumns(table1, new[] { "Id", "Name", "Username", "Role", "Address" }, new[] { "Id", "Fullname", "Username", "Role", "Address" });
+            Helper.GenerateTableColumns(table1, new[] { "Id", "Name", "Username", "Role", "Phone Number", "Address" }, new[] { "Id", "Fullname", "Username", "Role", "PhoneNumber", "Address" });
             roles.DataSource = new string[] { "admin", "officer", "customer" };
             filterRoles.DataSource = new string[] { "all", "admin", "officer", "customer" };
             RefreshData();
@@ -67,6 +67,7 @@ namespace OurWaterDesktop.Forms
             table1.Enabled = !enabled;
 
             username.ReadOnly = !enabled;
+            phoneNumber.ReadOnly = !enabled;
             fullname.ReadOnly = !enabled;
             roles.Enabled = enabled;
             password.ReadOnly = !enabled;
@@ -77,6 +78,7 @@ namespace OurWaterDesktop.Forms
             if (clear)
             {
                 username.Text = "";
+                phoneNumber.Text = "";
                 fullname.Text = "";
                 password.Text = "";
                 confirmPassword.Text = "";
@@ -138,6 +140,11 @@ namespace OurWaterDesktop.Forms
                 MessageBox.Show("Full Name is required");
                 return;
             }
+            if (!phoneNumber.Text.All(Char.IsDigit))
+            {
+                MessageBox.Show("Phone Number not valid");
+                return;
+            }
             if (roles.Text.Trim() == "")
             {
                 MessageBox.Show("Username Role is required");
@@ -197,6 +204,7 @@ namespace OurWaterDesktop.Forms
             {
                 username = username.Text.Trim(),
                 fullname = fullname.Text.Trim(),
+                phoneNumber = phoneNumber.Text.Trim(),
                 password = password.Text,
                 role = roles.Text,
                 address = address.Text.Trim(),
@@ -216,6 +224,7 @@ namespace OurWaterDesktop.Forms
             {
                 username = username.Text.Trim(),
                 fullname = fullname.Text.Trim(),
+                phoneNumber = phoneNumber.Text.Trim(),
                 password = password.Text,
                 role = roles.Text,
                 address = address.Text.Trim(),
@@ -226,7 +235,7 @@ namespace OurWaterDesktop.Forms
                 return;
             }
             ToggleInput(false, true);
-            RefreshData();
+            await RefreshData();
         }
 
         async private Task Delete(int id)
@@ -238,13 +247,14 @@ namespace OurWaterDesktop.Forms
                 return;
             }
             ToggleInput(false, true);
-            RefreshData();
+            await RefreshData();
         }
 
         private void OnCellClicked(object sender, DataGridViewCellEventArgs e)
         {
             var row = GetSelected();
             if (row == null) return;
+            phoneNumber.Text = row.phoneNumber;
             username.Text = row.username;
             fullname.Text = row.fullname;
             roles.Text = row.role;
@@ -269,6 +279,7 @@ namespace OurWaterDesktop.Forms
         public int id { get; set; }
         public string username { get; set; }
         public string fullname { get; set; }
+        public string phoneNumber { get; set; }
         public string role { get; set; }
         public string address { get; set; }
     }
@@ -277,6 +288,7 @@ namespace OurWaterDesktop.Forms
     {
         public string username { get; set; }
         public string fullname { get; set; }
+        public string phoneNumber { get; set; }
         public string password { get; set; }
         public string role { get; set; }
         public string address { get; set; }

@@ -44,7 +44,8 @@ public partial class OurWaterContext : DbContext
             entity.Property(e => e.ConsumptionRecordId).HasColumnName("consumptionRecordId");
             entity.Property(e => e.CreatedAt)
                 .HasColumnType("datetime")
-                .HasColumnName("createdAt");
+                .HasColumnName("createdAt")
+                .HasDefaultValueSql("(getdate())");
             entity.Property(e => e.CustomerId).HasColumnName("customerId");
             entity.Property(e => e.Deadline)
                 .HasColumnType("datetime")
@@ -63,7 +64,8 @@ public partial class OurWaterContext : DbContext
                 .HasColumnName("status");
             entity.Property(e => e.UpdatedAt)
                 .HasColumnType("datetime")
-                .HasColumnName("updatedAt");
+                .HasColumnName("updatedAt")
+                .HasDefaultValueSql("(getdate())");
 
             entity.HasOne(d => d.ConsumptionRecord).WithMany(p => p.Bills)
                 .HasForeignKey(d => d.ConsumptionRecordId)
@@ -106,7 +108,8 @@ public partial class OurWaterContext : DbContext
                 .HasColumnName("status");
             entity.Property(e => e.UpdatedAt)
                 .HasColumnType("datetime")
-                .HasColumnName("updatedAt");
+                .HasColumnName("updatedAt")
+                .HasDefaultValueSql("(getdate())");
 
             entity.HasOne(d => d.Corrector).WithMany(p => p.ConsumptionDebitRecordCorrectedByNavigations)
                 .HasForeignKey(d => d.CorrectedBy)
@@ -131,7 +134,8 @@ public partial class OurWaterContext : DbContext
             entity.Property(e => e.BillId).HasColumnName("billId");
             entity.Property(e => e.CreatedAt)
                 .HasColumnType("datetime")
-                .HasColumnName("createdAt");
+                .HasColumnName("createdAt")
+                .HasDefaultValueSql("(getdate())");
             entity.Property(e => e.FineRuleId).HasColumnName("fineRuleId");
 
             entity.HasOne(d => d.Bill).WithMany(p => p.Fines)
@@ -187,6 +191,10 @@ public partial class OurWaterContext : DbContext
                 .HasMaxLength(50)
                 .IsUnicode(false)
                 .HasColumnName("fullname");
+            entity.Property(e => e.PhoneNumber)
+                .HasMaxLength(20)
+                .IsUnicode(false)
+                .HasColumnName("phoneNumber");
             entity.Property(e => e.Password)
                 .HasMaxLength(256)
                 .IsUnicode(false)

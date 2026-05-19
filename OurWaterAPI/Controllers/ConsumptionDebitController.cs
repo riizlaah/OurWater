@@ -27,7 +27,7 @@ namespace OurWaterAPI.Controllers
         public async Task<ActionResult> Submit(IFormFile img, [FromForm] int customerId, [FromForm] decimal debit)
         {
             var allowedDay = new[] { 1, 2, 3, 4, 5, 6, 7, 26, 27, 28, 29, 30, 31 };
-            //if (!allowedDay.Contains(DateTime.Now.Day)) return Helper.err("Today is not a time to input consumption debit");
+            if (!allowedDay.Contains(DateTime.Now.Day)) return Helper.err("Today is not a time to input consumption debit");
             if (img == null || img.Length == 0) return Helper.err("Image is required");
             if (debit <= 0m) return Helper.err("Debit not valid");
             var userId = Convert.ToInt32(User.FindFirstValue(ClaimTypes.NameIdentifier));
@@ -40,12 +40,12 @@ namespace OurWaterAPI.Controllers
             if (!allowedImg.Contains(img.ContentType)) return Helper.err("The only allowed images are jpg/png");
             if(rec != null)
             {
+                if (rec.Status == "Verified") return Helper.err("Can't replace verified record");
                 if (userId == customerId) return Helper.err("Customer can't correcting the submitted debit record");
                 rec.Debit = debit;
                 rec.CorrectedBy = userId;
                 rec.ImagePath = await Helper.uploadFile(img, uploadPath, rec.ImagePath);
                 rec.Status = "Pending";
-                rec.UpdatedAt = DateTime.Now;
             } else
             {
                 rec = new ConsumptionDebitRecord
@@ -58,11 +58,11 @@ namespace OurWaterAPI.Controllers
                     ImagePath = await Helper.uploadFile(img, uploadPath),
                     InputtedBy = userId,
                     RejectionReason = "",
-                    UpdatedAt = DateTime.Now
                 };
                 dbc.ConsumptionDebitRecords.Add(rec);
             }
             await dbc.SaveChangesAsync();
+            Console.WriteLine("Ok?");
             return Helper.msg();
         }
 
@@ -114,6 +114,7 @@ namespace OurWaterAPI.Controllers
                 {
                     id = rec.CustomerId,
                     name = rec.Customer.Fullname,
+                    phoneNumber = rec.Customer.PhoneNumber,
                     address = rec.Customer.Address
                 }
             });
@@ -164,6 +165,7 @@ namespace OurWaterAPI.Controllers
                 id = c.Id,
                 customerName = c.Customer.Fullname,
                 inputtedBy = c.Creator.Fullname,
+                inputtedByRole = c.Creator.Role,
                 correctedBy = c.Corrector?.Fullname,
                 debit = c.Debit,
                 prevDebit = prevDebit?.Debit,
@@ -202,8 +204,6 @@ namespace OurWaterAPI.Controllers
                     Deadline = DateTime.Now.AddDays(14),
                     Status = "Pending",
                     Amount = CalculateBillAmount(rec.Debit),
-                    UpdatedAt = DateTime.Now,
-                    CreatedAt = DateTime.Now,
                     RejectionReason = "",
                 });
             }

@@ -48,7 +48,7 @@ namespace OurWaterAPI.Controllers
                 {
                     if(fr.IsInEffectiveRange(totalDays))
                     {
-                        bill.Fines.Add(new Fine { BillId = bill.Id, FineRuleId = fr.Id, CreatedAt = DateTime.Now });
+                        bill.Fines.Add(new Fine { BillId = bill.Id, FineRuleId = fr.Id });
                         somethingChanged = true;
                     }
                 }
@@ -97,7 +97,7 @@ namespace OurWaterAPI.Controllers
                 {
                     if (fr.IsInEffectiveRange(totalDays))
                     {
-                        b.Fines.Add(new Fine { BillId = b.Id, FineRuleId = fr.Id, CreatedAt = DateTime.Now });
+                        b.Fines.Add(new Fine { BillId = b.Id, FineRuleId = fr.Id });
                         somethingChanged = true;
                     }
                 }
@@ -140,6 +140,7 @@ namespace OurWaterAPI.Controllers
             var b = dbc.Bills.Include(b => b.Customer).FirstOrDefault(b => b.Id == id);
             if (b == null) return Helper.err("Not found", 404);
             if (b.CustomerId != userId) return Helper.err("Forbidden", 403);
+            if (b.Status == "Paid") return Helper.err("Can't replace verified payment");
             var allowedImg = new[] { "image/png", "image/jpg", "image/jpeg" };
             if (!allowedImg.Contains(img.ContentType)) return Helper.err("The only allowed images are jpg/png");
             b.ImagePath = await Helper.uploadFile(img, uploadPath, b.ImagePath);

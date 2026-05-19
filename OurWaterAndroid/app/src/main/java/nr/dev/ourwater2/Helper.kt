@@ -1,9 +1,12 @@
 package nr.dev.ourwater2
 
+import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.BitmapFactory
+import android.net.Uri
+import android.provider.OpenableColumns
 import android.util.Log
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.getValue
@@ -58,6 +61,7 @@ data class ConsumptionDebit(
     val id: Int,
     val customerName: String,
     val inputtedBy: String,
+    val inputtedByRole: String,
     val correctedBy: String?,
     val debit: Double,
     val date: LocalDate,
@@ -97,6 +101,7 @@ data class Bill(
 data class Customer2(
     val id: Int,
     val name: String,
+    val phoneNumber: String,
     val address: String
 )
 
@@ -199,7 +204,8 @@ object HttpClient {
     suspend fun sendMultipart(
         route: String,
         files: Map<String, File>,
-        others: Map<String, String>
+        others: Map<String, String> = emptyMap(),
+        method: String = "POST"
     ): HttpRes {
         return try {
             val boundary = "----formBoundary${System.currentTimeMillis()}"
@@ -244,7 +250,7 @@ object HttpClient {
             var headers = mapOf("Content-Type" to "multipart/form-data; boundary=$boundary")
             if (token.isNotEmpty()) headers = headers + mapOf("authorization" to "Bearer $token")
             withContext(Dispatchers.IO) {
-                send(HttpReq("$addr/api/$route", bytes = bytes, headers = headers))
+                send(HttpReq("$addr/api/$route", bytes = bytes, headers = headers, method = method))
             }
         } catch (e: Exception) {
             HttpRes(-1, errors = e.message ?: "Upload failed")
@@ -353,6 +359,51 @@ object HttpClient {
             null
         }
     }
+
+    suspend fun submitConsumptionDebit(customerId: Int, debit: String, img: File): String {
+        val res = sendMultipart(
+            "consumptiondebits",
+            mapOf("img" to img),
+            mapOf("customerId" to customerId.toString(), "debit" to debit.replace('.', ','))
+        )
+        println(res)
+        if(res.code == 200) return "ok"
+        if(res.body == null) return "Submit Consumption Debit Failed"
+        return try {
+            JSONObject(res.body).getString("message")
+        } catch (e: Exception) {
+            e.printStackTrace()
+            "Submit Consumption Debit Failed"
+        }
+    }
+
+    suspend fun patchConsumptionDebit(id: Int, status: String, rejectionReason: String): String {
+        val req = """{"rejectionReason": "$rejectionReason", "status": "$status"}"""
+        val res = jsonReq("consumptiondebits/$id", req, "PATCH")
+        if(res.code == 200) return "ok"
+        if(res.body == null) return "Failed to update consumption debit"
+        return try {
+            JSONObject(res.body).getString("message")
+        } catch (e: Exception) {
+            e.printStackTrace()
+            "Failed to update consumption debit"
+        }
+    }
+
+    suspend fun payBill(id: Int, img: File): String {
+        val res = sendMultipart(
+            "bills/$id/pay",
+            mapOf("img" to img)
+        )
+        if(res.code == 200) return "ok"
+        if(res.body == null) return "Bill Payment Failed"
+        return try {
+            JSONObject(res.body).getString("message")
+        } catch (e: Exception) {
+            e.printStackTrace()
+            "Bill Payment Failed"
+        }
+    }
 }
 
 inline fun <reified T> JSONObject.bind(): T {
@@ -363,7 +414,8 @@ inline fun <reified T> JSONObject.bind(): T {
                 getInt("id"),
                 getString("customerName"),
                 getString("inputtedBy"),
-                getString("correctedBy"),
+                optString("inputtedByRole"),
+                if(isNull("correctedBy")) null else getString("correctedBy"),
                 getDouble("debit"),
                 LocalDate.parse(getString("date")),
                 getString("status"),
@@ -397,12 +449,17 @@ inline fun <reified T> JSONObject.bind(): T {
                 LocalDateTime.parse(getString("createdAt")),
                 if (detailed) getJSONArray("fines").getStringList() else emptyList(),
                 if (detailed) getString("rejectionReason") else "",
-                if (detailed && !isNull("imagePath")) getString("imagePath") else ""
+                if (detailed && !isNull("imagePath")) getString("imagePath") else null
             )
         }
 
         Customer2::class -> {
-            Customer2(getInt("id"), getString("name"), getString("address"))
+            Customer2(
+                getInt("id"),
+                getString("name"),
+                getString("phoneNumber"),
+                getString("address")
+            )
         }
 
         SubmittedConsumptionDebit::class -> {
@@ -413,7 +470,12 @@ inline fun <reified T> JSONObject.bind(): T {
                 getString("status"),
                 if (isNull("imagePath")) null else getString("imagePath"),
                 getString("rejectionReason"),
-                Customer2(cust.getInt("id"), cust.getString("name"), cust.getString("address"))
+                Customer2(
+                    cust.getInt("id"),
+                    cust.getString("name"),
+                    cust.getString("phoneNumber"),
+                    cust.getString("address")
+                )
             )
         }
 
@@ -453,5 +515,56 @@ class PickJpgPngContract : ActivityResultContracts.GetContent() {
         return super.createIntent(context, input).apply {
             putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("image/jpeg", "image/png"))
         }
+    }
+}
+
+suspend fun ContentResolver.AsImage(uri: Uri): ImageBitmap? {
+    return try {
+        withContext(Dispatchers.IO) {
+            openInputStream(uri)?.use { stream ->
+                val bytes =
+                    stream.buffered().use { it.readBytes() }
+                BitmapFactory.decodeByteArray(
+                    bytes,
+                    0,
+                    bytes.size
+                ).asImageBitmap()
+            }
+        }
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null
+    }
+}
+
+suspend fun ContentResolver.getBytes(uri: Uri): ByteArray? {
+    return try {
+        withContext(Dispatchers.IO) {
+            openInputStream(uri)?.use { stream ->
+                stream.buffered().use { it.readBytes() }
+            }
+        }
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null
+    }
+}
+
+fun ContentResolver.getMimeType(uri: Uri): String {
+    return getType(uri) ?: "application/octet-stream"
+}
+
+fun ContentResolver.getFilename(uri: Uri): String {
+    return when (uri.scheme) {
+        "content" -> {
+            query(uri, null, null, null, null)?.use { cursor ->
+                val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                if (nameIndex != -1 && cursor.moveToFirst()) {
+                    cursor.getString(nameIndex)
+                } else null
+            } ?: "default"
+        }
+        "file" -> uri.path?.let { java.io.File(it).name } ?: "default"
+        else -> "default"
     }
 }

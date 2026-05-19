@@ -1,6 +1,5 @@
 package nr.dev.ourwater2
 
-import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -32,7 +31,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -42,21 +40,19 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import nr.dev.ourwater2.ui.theme.OurWater2Theme
-import java.text.NumberFormat
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 
-class SubmitConsumptionDebit: ComponentActivity() {
+class SubmitConsumptionDebit : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -65,30 +61,38 @@ class SubmitConsumptionDebit: ComponentActivity() {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     var debit by remember { mutableStateOf("") }
                     var customerName by remember { mutableStateOf("") }
-                    var customerAddress by remember { mutableStateOf("") }
+                    var errMsg by remember { mutableStateOf("") }
                     var showDialog by remember { mutableStateOf(false) }
+                    var loading by remember { mutableStateOf(false) }
                     val scope = rememberCoroutineScope()
-                    val ctx = LocalContext.current
+                    val customerId = intent.getIntExtra("customerId", -1)
                     var dropdownOpened by remember { mutableStateOf(false) }
                     val dropdownItems = remember { mutableStateListOf<Customer2>() }
                     var selectedCustomer by remember { mutableStateOf<Customer2?>(null) }
-                    var submittedRecord by remember { mutableStateOf<SubmittedConsumptionDebit?>(null) }
-//                    var item by remember { mutableStateOf<Bill?>(null) }
-
-                    LaunchedEffect(Unit) {
-//                        item = HttpClient.getBill(intent.getIntExtra("id", -1))
+                    var submittedRecord by remember {
+                        mutableStateOf<SubmittedConsumptionDebit?>(
+                            null
+                        )
                     }
 
                     LaunchedEffect(selectedCustomer) {
-                        if(selectedCustomer != null) {
-                            submittedRecord = HttpClient.getSubmittedConsumptionDebit(selectedCustomer!!.id)
+                        if (selectedCustomer != null) {
+                            submittedRecord =
+                                HttpClient.getSubmittedConsumptionDebit(selectedCustomer!!.id)
                         }
                     }
 
-//                    LaunchedEffect(submittedRecord) {
-//                        if(submi)
-//                    }
+                    LaunchedEffect(customerName) {
+                        delay(500)
+                        dropdownItems.clear()
+                        dropdownItems.addAll(HttpClient.getCustomers(customerName))
+                        dropdownOpened = dropdownItems.isNotEmpty()
+                    }
 
+                    LaunchedEffect(submittedRecord) {
+                        if(submittedRecord == null) return@LaunchedEffect
+                        debit = submittedRecord!!.debit.toString()
+                    }
 
 
                     if (HttpClient.user == null) return@Scaffold
@@ -122,37 +126,72 @@ class SubmitConsumptionDebit: ComponentActivity() {
                         }
                         LazyColumn(Modifier.weight(1f)) {
                             item {
-                                OutlinedTextField(customerName, {customerName = it}, Modifier.fillMaxWidth(), label = {Text("Customer Name")})
-                                DropdownMenu(dropdownOpened, {dropdownOpened = false}, Modifier.fillMaxWidth()) {
-                                    dropdownItems.forEach { item ->
-                                        DropdownMenuItem({
-                                            Text("${item.name} - ${item.address}", overflow = TextOverflow.Ellipsis, maxLines = 1)
-                                        }, {
-                                            selectedCustomer = item
-                                        })
-                                    }
-                                }
-                                if(selectedCustomer != null) Text("Address : ${selectedCustomer!!.address}", Modifier.fillMaxWidth().padding(start = 12.dp))
-                                Spacer(Modifier.height(12.dp))
-                                OutlinedTextField(debit, {debit = it}, Modifier.fillMaxWidth(), label = {Text("Debit (M³)")})
+                                if (HttpClient.user!!.role == "officer") {
 
-                                if(submittedRecord != null) {
-                                    TextButton({}) {
+                                    OutlinedTextField(
+                                        customerName,
+                                        { customerName = it },
+                                        Modifier.fillMaxWidth(),
+                                        label = { Text("Customer Name") })
+                                    Box(Modifier.fillMaxWidth()) {
+                                        DropdownMenu(dropdownOpened, { dropdownOpened = false }) {
+                                            dropdownItems.forEach { item ->
+                                                DropdownMenuItem({
+                                                    Text(
+                                                        "${item.name} - ${item.phoneNumber}",
+                                                        overflow = TextOverflow.Ellipsis,
+                                                        maxLines = 1
+                                                    )
+                                                }, {
+                                                    selectedCustomer = item
+                                                    customerName = item.name
+                                                    dropdownOpened = false
+                                                })
+                                            }
+                                        }
+                                    }
+                                    if (selectedCustomer != null) Text(
+                                        "Address : ${selectedCustomer!!.address}",
+                                        Modifier
+                                            .fillMaxWidth()
+                                            .padding(start = 12.dp)
+                                    )
+                                    if (selectedCustomer != null) Text(
+                                        "Phone : ${selectedCustomer!!.phoneNumber}",
+                                        Modifier
+                                            .fillMaxWidth()
+                                            .padding(start = 12.dp)
+                                    )
+                                }
+                                Spacer(Modifier.height(12.dp))
+                                OutlinedTextField(
+                                    debit,
+                                    { debit = it },
+                                    Modifier.fillMaxWidth(),
+                                    label = { Text("Debit (M³)") })
+
+                                if (submittedRecord != null) {
+                                    TextButton({showDialog = true}) {
                                         Text("Detail")
                                     }
-                                    if(showDialog) {
-                                        Dialog({showDialog = false}) {
-                                            Column(Modifier.fillMaxWidth()) {
+                                    if (showDialog) {
+                                        Dialog({ showDialog = false }) {
+                                            Column(
+                                                Modifier
+                                                    .fillMaxWidth()
+                                                    .clip(RoundedCornerShape(24.dp))
+                                                    .background(Color.White)
+                                                    .padding(24.dp)
+                                            ) {
                                                 Text("Debit : ${"%.2f".format(submittedRecord!!.debit)} M³")
                                                 Text("Status : ${submittedRecord!!.status}")
+                                                if (submittedRecord!!.rejectionReason.isNotEmpty()) Text(
+                                                    "Rejection Reason : ${submittedRecord!!.rejectionReason}"
+                                                )
                                             }
                                         }
                                     }
                                 }
-
-
-                                if(selectedCustomer != null) Text("Address : ${selectedCustomer!!.address}")
-                                OutlinedTextField(debit, {debit = it}, Modifier.fillMaxWidth())
 
 
                                 var selectedImageBitmap by remember {
@@ -164,26 +203,14 @@ class SubmitConsumptionDebit: ComponentActivity() {
                                 val imagePickerLauncher = rememberLauncherForActivityResult(
                                     PickJpgPngContract()
                                 ) { uri: Uri? ->
-                                    uri?.let {
-                                        imageUri = it
-                                        try {
-                                            contentResolver.openInputStream(it)?.use { stream ->
-                                                val bytes =
-                                                    stream.buffered().use { it.readBytes() }
-                                                selectedImageBitmap =
-                                                    BitmapFactory.decodeByteArray(
-                                                        bytes,
-                                                        0,
-                                                        bytes.size
-                                                    ).asImageBitmap()
-                                            }
-                                        } catch (e: Exception) {
-                                            e.printStackTrace()
-                                            selectedImageBitmap = null
+                                    uri?.let { u ->
+                                        imageUri = u
+                                        scope.launch {
+                                            selectedImageBitmap = contentResolver.AsImage(u)
                                         }
                                     }
                                 }
-                                Text("Payment Proof")
+                                Text("Proof")
                                 if (selectedImageBitmap != null) {
                                     Image(
                                         selectedImageBitmap!!,
@@ -193,28 +220,73 @@ class SubmitConsumptionDebit: ComponentActivity() {
                                         contentDescription = ""
                                     )
                                 } else {
-                                    Box(
-                                        Modifier
-                                            .fillMaxWidth()
-                                            .background(Color.LightGray)
-                                            .padding(24.dp)
-                                    ) {
-                                        Text("Not Paid Yet")
+                                    if (submittedRecord != null && submittedRecord!!.imagePath != null) {
+                                        NetImage(
+                                            submittedRecord!!.imagePath!!,
+                                            Modifier
+                                                .fillMaxWidth()
+                                                .padding(24.dp)
+                                        )
+                                    } else {
+                                        Box(
+                                            Modifier
+                                                .fillMaxWidth()
+                                                .background(Color.LightGray)
+                                                .padding(24.dp)
+                                        ) {
+                                            Text("Not Image Selected")
+                                        }
                                     }
                                 }
-//                                if (item!!.status in listOf("Pending", "Rejected")) {
-//                                    Spacer(Modifier.height(12.dp))
-//                                    OutlinedButton({
-//                                        imagePickerLauncher.launch("image/*")
-//                                    }, shape = RoundedCornerShape(16.dp)) {
-//                                        Text("Pick Image")
-//                                    }
-//                                    Spacer(Modifier.height(12.dp))
-//                                    Button({}, Modifier.fillMaxWidth()) {
-//                                        Text("Save")
-//                                    }
-//                                }
-
+                                ErrText(errMsg, Modifier.fillMaxWidth())
+                                if (submittedRecord != null && submittedRecord!!.status == "Verified") return@item
+                                Spacer(Modifier.height(12.dp))
+                                OutlinedButton({
+                                    imagePickerLauncher.launch("image/*")
+                                }, shape = RoundedCornerShape(16.dp)) {
+                                    Text("Pick Image")
+                                }
+                                Spacer(Modifier.height(12.dp))
+                                Button({
+                                    if (selectedCustomer == null) {
+                                        errMsg = "Customer not selected"
+                                        return@Button
+                                    }
+                                    if (debit.toDoubleOrNull() == null) {
+                                        errMsg = "Debit not valid"
+                                        return@Button
+                                    }
+                                    if (imageUri == null) {
+                                        errMsg = "Proof image required"
+                                        return@Button
+                                    }
+                                    errMsg = ""
+                                    scope.launch {
+                                        loading = true
+                                        val bytes = contentResolver.getBytes(imageUri!!)
+                                        if (bytes == null) {
+                                            errMsg = "Failed to process selected file"
+                                            return@launch
+                                        }
+                                        when (val msg = HttpClient.submitConsumptionDebit(
+                                            if (customerId > 0) customerId else selectedCustomer!!.id,
+                                            debit,
+                                            File(
+                                                contentResolver.getFilename(imageUri!!),
+                                                bytes,
+                                                contentResolver.getMimeType(imageUri!!),
+                                            )
+                                        )) {
+                                            "ok" -> finish()
+                                            else -> errMsg = msg
+                                        }
+                                        loading = false
+                                    }
+                                }, Modifier.fillMaxWidth(), enabled = !loading) {
+                                    LoadingOrContent(
+                                        loading,
+                                        { Text(if (submittedRecord != null) "Save" else "Submit") })
+                                }
                             }
                         }
                     }

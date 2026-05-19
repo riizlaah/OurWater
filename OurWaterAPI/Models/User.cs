@@ -12,6 +12,7 @@ public partial class User
     public string Password { get; set; } = null!;
 
     public string Fullname { get; set; } = null!;
+    public string PhoneNumber { get; set; } = null!;
 
     public string Role { get; set; } = null!;
 

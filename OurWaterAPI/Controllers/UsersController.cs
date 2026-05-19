@@ -72,7 +72,7 @@ namespace OurWaterAPI.Controllers
             }
             if(search != null)
             {
-                query = query.Where(u => EF.Functions.Like(u.Username, "%" + search + "%") || EF.Functions.Like(u.Fullname, "%" + search + "%"));
+                query = query.Where(u => EF.Functions.Like(u.Username, "%" + search + "%") || EF.Functions.Like(u.Fullname, "%" + search + "%") || EF.Functions.Like(u.PhoneNumber, "%" + search + "%"));
             }
             var data = query.ToList();
             return Helper.res(data.Select(u => new
@@ -80,6 +80,7 @@ namespace OurWaterAPI.Controllers
                 id = u.Id,
                 username = u.Username,
                 fullname = u.Fullname,
+                phoneNumber = u.PhoneNumber,
                 role = u.Role,
                 address = u.Address,
             }));
@@ -89,11 +90,13 @@ namespace OurWaterAPI.Controllers
         [Authorize(Roles = "officer")]
         public ActionResult SearchCustomers(string search)
         {
-            var data = dbc.Users.Where(u => u.Role == "customer" && ( EF.Functions.Like(u.Username, "%" + search + "%") || EF.Functions.Like(u.Fullname, "%" + search + "%") )).ToList();
+            var data = dbc.Users.Where(u => u.Role == "customer" && ( EF.Functions.Like(u.Username, "%" + search + "%") || EF.Functions.Like(u.Fullname, "%" + search + "%") ))
+                .OrderBy(u => u.Id).Take(15).ToList();
             return Helper.res(data.Select(u => new
             {
                 id = u.Id,
                 name = u.Fullname,
+                phoneNumber = u.PhoneNumber,
                 address = u.Address,
             }));
         }
@@ -121,6 +124,8 @@ namespace OurWaterAPI.Controllers
             var roles = new[] { "admin", "officer", "customer" };
             if (!roles.Contains(input.role)) return Helper.err("Role not valid");
             if (dbc.Users.Any(u => u.Username == input.username)) return Helper.err("Username has been taken");
+            if (!input.phoneNumber.All(Char.IsDigit)) return Helper.err("Phone Number must be digit only");
+            if (dbc.Users.Any(u => u.PhoneNumber == input.phoneNumber)) return Helper.err("Phone Number has been taken");
             if (input.password.Length < 8) return Helper.err("Password length must be 8 characters or more");
             var user = input.ToEntity();
             user.Password = sha256(user.Password);
@@ -134,9 +139,14 @@ namespace OurWaterAPI.Controllers
         public ActionResult Update(int id, UserDTO input)
         {
             if (!dbc.Users.Any(u => u.Id == id)) return Helper.err("User not found", 404);
+            if (!input.phoneNumber.All(Char.IsDigit)) return Helper.err("Phone Number must be digit only");
             if(dbc.Users.Any(u => u.Username == input.username && u.Id != id))
             {
                 return Helper.err("Username has been taken");
+            }
+            if (dbc.Users.Any(u => u.PhoneNumber == input.phoneNumber && u.Id != id))
+            {
+                return Helper.err("Phone Number has been taken");
             }
             var user = input.ToEntity(id);
             dbc.Users.Attach(user).State = EntityState.Modified;
@@ -197,17 +207,18 @@ namespace OurWaterAPI.Controllers
     {
         [Required] public string username { get; set; } = null!;
         [Required] public string fullname { get; set; } = null!;
-        public string password { get; set; } = "";
+        [Required] public string phoneNumber { get; set; } = null!;
+        [Required(AllowEmptyStrings = true)] public string password { get; set; } = "";
         [Required] public string role { get; set; } = null!;
         [Required] public string address { get; set; } = null!;
 
         public User ToEntity()
         {
-            return new User { Username = username, Fullname = fullname, Password = password, Role = role, Address = address };
+            return new User { Username = username, Fullname = fullname, PhoneNumber = phoneNumber, Password = password, Role = role, Address = address };
         }
         public User ToEntity(int id)
         {
-            return new User { Id = id, Username = username, Fullname = fullname, Password = password, Role = role, Address = address };
+            return new User { Id = id, Username = username, Fullname = fullname, PhoneNumber = phoneNumber, Password = password, Role = role, Address = address };
         }
     }
 }

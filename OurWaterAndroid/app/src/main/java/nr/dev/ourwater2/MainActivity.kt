@@ -69,14 +69,15 @@ class MainActivity : ComponentActivity() {
                             username,
                             { username = it },
                             modifier = Modifier.fillMaxWidth(),
-                            label = { Text("Username") })
+                            label = { Text("Username") }, singleLine = true)
                         Spacer(Modifier.height(12.dp))
                         OutlinedTextField(
                             password,
                             { password = it },
                             modifier = Modifier.fillMaxWidth(),
                             label = { Text("Password") },
-                            visualTransformation = PasswordVisualTransformation()
+                            visualTransformation = PasswordVisualTransformation(),
+                            singleLine = true
                         )
                         Spacer(Modifier.height(30.dp))
                         ErrText(errMsg)

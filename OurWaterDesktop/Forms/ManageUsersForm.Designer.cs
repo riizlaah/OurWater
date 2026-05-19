@@ -51,6 +51,8 @@
             togglePassword = new CheckBox();
             label8 = new Label();
             filterRoles = new ComboBox();
+            phoneNumber = new TextBox();
+            label9 = new Label();
             ((System.ComponentModel.ISupportInitialize)table1).BeginInit();
             SuspendLayout();
             // 
@@ -136,9 +138,9 @@
             // 
             // username
             // 
-            username.Location = new Point(115, 427);
+            username.Location = new Point(126, 427);
             username.Name = "username";
-            username.Size = new Size(241, 27);
+            username.Size = new Size(230, 27);
             username.TabIndex = 9;
             // 
             // label2
@@ -152,9 +154,9 @@
             // 
             // fullname
             // 
-            fullname.Location = new Point(115, 460);
+            fullname.Location = new Point(126, 460);
             fullname.Name = "fullname";
-            fullname.Size = new Size(241, 27);
+            fullname.Size = new Size(230, 27);
             fullname.TabIndex = 11;
             // 
             // label3
@@ -169,7 +171,7 @@
             // label4
             // 
             label4.AutoSize = true;
-            label4.Location = new Point(15, 495);
+            label4.Location = new Point(15, 525);
             label4.Name = "label4";
             label4.Size = new Size(39, 20);
             label4.TabIndex = 12;
@@ -179,9 +181,9 @@
             // 
             roles.DropDownStyle = ComboBoxStyle.DropDownList;
             roles.FormattingEnabled = true;
-            roles.Location = new Point(115, 493);
+            roles.Location = new Point(126, 523);
             roles.Name = "roles";
-            roles.Size = new Size(129, 28);
+            roles.Size = new Size(118, 28);
             roles.TabIndex = 13;
             // 
             // password
@@ -264,11 +266,29 @@
             filterRoles.TabIndex = 22;
             filterRoles.SelectedIndexChanged += OnRoleFilterChanged;
             // 
+            // phoneNumber
+            // 
+            phoneNumber.Location = new Point(126, 492);
+            phoneNumber.Name = "phoneNumber";
+            phoneNumber.Size = new Size(230, 27);
+            phoneNumber.TabIndex = 24;
+            // 
+            // label9
+            // 
+            label9.AutoSize = true;
+            label9.Location = new Point(12, 493);
+            label9.Name = "label9";
+            label9.Size = new Size(108, 20);
+            label9.TabIndex = 23;
+            label9.Text = "Phone Number";
+            // 
             // ManageUsersForm
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(744, 598);
+            Controls.Add(phoneNumber);
+            Controls.Add(label9);
             Controls.Add(filterRoles);
             Controls.Add(label8);
             Controls.Add(togglePassword);
@@ -328,5 +348,7 @@
         private CheckBox togglePassword;
         private Label label8;
         private ComboBox filterRoles;
+        private TextBox phoneNumber;
+        private Label label9;
     }
 }

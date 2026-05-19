@@ -47,6 +47,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import nr.dev.ourwater2.ui.theme.OurWater2Theme
 import java.text.NumberFormat
 import java.time.format.DateTimeFormatter
@@ -61,6 +62,8 @@ class BillPaymentActivity : ComponentActivity() {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     val scope = rememberCoroutineScope()
                     var refreshing by remember { mutableStateOf(false) }
+                    var errMsg by remember { mutableStateOf("") }
+                    var loading by remember { mutableStateOf(false) }
                     val ctx = LocalContext.current
                     var item by remember { mutableStateOf<Bill?>(null) }
 
@@ -131,8 +134,9 @@ class BillPaymentActivity : ComponentActivity() {
                                     }
                                     Text(
                                         "Total Amount : ${currencyFormat.format(item!!.totalAmount)}",
-                                        fontWeight = FontWeight.Bold
+                                        fontWeight = FontWeight.SemiBold,
                                     )
+                                    Spacer(Modifier.height(12.dp))
                                     Text(
                                         "Deadline : ${
                                             item!!.deadline.format(
@@ -140,7 +144,7 @@ class BillPaymentActivity : ComponentActivity() {
                                                     "dd-MM-yyyy"
                                                 )
                                             )
-                                        }"
+                                        }", color = Color(0xFFA20000), fontWeight = FontWeight.SemiBold
                                     )
                                     Spacer(Modifier.height(24.dp))
 
@@ -155,21 +159,7 @@ class BillPaymentActivity : ComponentActivity() {
                                     ) { uri: Uri? ->
                                         uri?.let {
                                             imageUri = it
-                                            try {
-                                                contentResolver.openInputStream(it)?.use { stream ->
-                                                    val bytes =
-                                                        stream.buffered().use { it.readBytes() }
-                                                    selectedImageBitmap =
-                                                        BitmapFactory.decodeByteArray(
-                                                            bytes,
-                                                            0,
-                                                            bytes.size
-                                                        ).asImageBitmap()
-                                                }
-                                            } catch (e: Exception) {
-                                                e.printStackTrace()
-                                                selectedImageBitmap = null
-                                            }
+                                            scope.launch { selectedImageBitmap = contentResolver.AsImage(it) }
                                         }
                                     }
                                     Text("Payment Proof")
@@ -200,6 +190,10 @@ class BillPaymentActivity : ComponentActivity() {
                                             }
                                         }
                                     }
+                                    if(item!!.rejectionReason.isNotEmpty()) {
+                                        Text("Rejection Reason", fontWeight = FontWeight.SemiBold)
+                                        Text(item!!.rejectionReason, Modifier.fillMaxWidth())
+                                    }
                                     if (item!!.status in listOf("Pending", "Rejected")) {
                                         Spacer(Modifier.height(12.dp))
                                         OutlinedButton({
@@ -208,8 +202,24 @@ class BillPaymentActivity : ComponentActivity() {
                                             Text("Pick Image")
                                         }
                                         Spacer(Modifier.height(12.dp))
-                                        Button({}, Modifier.fillMaxWidth()) {
-                                            Text("Save")
+                                        ErrText(errMsg, Modifier.fillMaxWidth().padding(bottom = 12.dp))
+                                        Button({
+                                            if(imageUri == null) {
+                                                errMsg = "Please select an image"
+                                                return@Button
+                                            }
+                                            errMsg = ""
+                                            scope.launch {
+                                                loading = true
+                                                val bytes = contentResolver.getBytes(imageUri!!)?: return@launch
+                                                when(val msg = HttpClient.payBill(item!!.id, File(contentResolver.getFilename(imageUri!!), bytes, contentResolver.getMimeType(imageUri!!)))) {
+                                                    "ok" -> refreshing = true
+                                                    else -> errMsg = msg
+                                                }
+                                                loading = false
+                                            }
+                                        }, Modifier.fillMaxWidth(), enabled = !loading) {
+                                            LoadingOrContent(loading, {Text("Save")})
                                         }
                                     }
 
